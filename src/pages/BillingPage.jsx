@@ -1,20 +1,21 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
-import InfoTip from '../components/common/InfoTip';
-import TruncatedCell from '../components/common/TruncatedCell';
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import InfoTip from "../components/common/InfoTip";
+import TruncatedCell from "../components/common/TruncatedCell";
+import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 import {
-  cancelMySubscription,
-  formatMoney,
-  formatMoneyDecimal,
-  getMyBilling,
-  getPackages,
-  getPlans,
-  openBillingPortal,
-  startPackageCheckout,
-  startPlanCheckout,
-} from '../utils/billingApi';
+    cancelMySubscription,
+    formatMoney,
+    formatMoneyDecimal,
+    getMyBilling,
+    getPackages,
+    getPlans,
+    listMarketingCoupons,
+    openBillingPortal,
+    startPackageCheckout,
+    startPlanCheckout,
+} from "../utils/billingApi";
 
 const Section = ({ title, action, children, info }) => (
   <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -31,19 +32,21 @@ const Section = ({ title, action, children, info }) => (
 
 const StatusPill = ({ status }) => {
   const map = {
-    ACTIVE: 'bg-emerald-100 text-emerald-700',
-    TRIALING: 'bg-sky-100 text-sky-700',
-    PAST_DUE: 'bg-amber-100 text-amber-700',
-    CANCELED: 'bg-slate-200 text-slate-700',
-    INCOMPLETE: 'bg-slate-100 text-slate-600',
-    INCOMPLETE_EXPIRED: 'bg-slate-100 text-slate-500',
-    UNPAID: 'bg-rose-100 text-rose-700',
-    completed: 'bg-emerald-100 text-emerald-700',
-    pending: 'bg-amber-100 text-amber-700',
-    failed: 'bg-rose-100 text-rose-700',
+    ACTIVE: "bg-emerald-100 text-emerald-700",
+    TRIALING: "bg-sky-100 text-sky-700",
+    PAST_DUE: "bg-amber-100 text-amber-700",
+    CANCELED: "bg-slate-200 text-slate-700",
+    INCOMPLETE: "bg-slate-100 text-slate-600",
+    INCOMPLETE_EXPIRED: "bg-slate-100 text-slate-500",
+    UNPAID: "bg-rose-100 text-rose-700",
+    completed: "bg-emerald-100 text-emerald-700",
+    pending: "bg-amber-100 text-amber-700",
+    failed: "bg-rose-100 text-rose-700",
   };
   return (
-    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${map[status] ?? 'bg-slate-100 text-slate-700'}`}>
+    <span
+      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${map[status] ?? "bg-slate-100 text-slate-700"}`}
+    >
       {status}
     </span>
   );
@@ -56,30 +59,36 @@ const BillingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const role = userRole ?? user?.role;
-  const canPurchase = role === 'academy_owner' || role === 'super_admin';
-  const canSubscribe = role === 'academy_owner' || role === 'super_admin';
+  const canPurchase = role === "academy_owner" || role === "super_admin";
+  const canSubscribe = role === "academy_owner" || role === "super_admin";
 
   const [overview, setOverview] = useState(null);
   const [packages, setPackages] = useState([]);
   const [plans, setPlans] = useState([]);
+  const [marketingCoupons, setMarketingCoupons] = useState([]);
+  const [couponCode, setCouponCode] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
-  const successFlag = searchParams.get('checkout');
-  const cancelFlag = searchParams.get('cancel');
+  const successFlag = searchParams.get("checkout");
+  const cancelFlag = searchParams.get("cancel");
 
   useEffect(() => {
-    if (successFlag === 'success') {
-      showToast?.({ status: 'success', description: 'Payment received. It may take a few seconds to reflect on your account.' });
+    if (successFlag === "success") {
+      showToast?.({
+        status: "success",
+        description:
+          "Payment received. It may take a few seconds to reflect on your account.",
+      });
       const next = new URLSearchParams(searchParams);
-      next.delete('checkout');
-      next.delete('session_id');
+      next.delete("checkout");
+      next.delete("session_id");
       setSearchParams(next, { replace: true });
-    } else if (cancelFlag === '1') {
-      showToast?.({ status: 'info', description: 'Checkout cancelled.' });
+    } else if (cancelFlag === "1") {
+      showToast?.({ status: "info", description: "Checkout cancelled." });
       const next = new URLSearchParams(searchParams);
-      next.delete('cancel');
+      next.delete("cancel");
       setSearchParams(next, { replace: true });
     }
   }, [successFlag, cancelFlag, searchParams, setSearchParams, showToast]);
@@ -88,16 +97,20 @@ const BillingPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const [me, pkgs, sub] = await Promise.all([
+      const [me, pkgs, sub, mkt] = await Promise.all([
         getMyBilling(),
         canPurchase ? getPackages() : Promise.resolve([]),
         canSubscribe ? getPlans() : Promise.resolve([]),
+        canPurchase
+          ? listMarketingCoupons().catch(() => [])
+          : Promise.resolve([]),
       ]);
       setOverview(me);
       setPackages(pkgs ?? []);
       setPlans(sub ?? []);
+      setMarketingCoupons(mkt ?? []);
     } catch (err) {
-      setError(err.message ?? 'Failed to load billing information.');
+      setError(err.message ?? "Failed to load billing information.");
     } finally {
       setLoading(false);
     }
@@ -108,7 +121,7 @@ const BillingPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const currency = overview?.currency?.toUpperCase?.() ?? 'USD';
+  const currency = overview?.currency?.toUpperCase?.() ?? "USD";
   const platformFeePercent = overview?.platformFeePercent ?? 10;
   const balance = overview?.credits?.balance ?? 0;
   const recentPayments = overview?.recentPayments ?? [];
@@ -120,14 +133,25 @@ const BillingPage = () => {
     try {
       const successUrl = `${window.location.origin}${window.location.pathname}?checkout=success&session_id={CHECKOUT_SESSION_ID}`;
       const cancelUrl = `${window.location.origin}${window.location.pathname}?cancel=1`;
-      const res = await startPackageCheckout({ id: pkgId, successUrl, cancelUrl });
+      const res = await startPackageCheckout({
+        id: pkgId,
+        successUrl,
+        cancelUrl,
+        couponCode: couponCode?.trim() || undefined,
+      });
       if (res?.url) {
         window.location.href = res.url;
       } else {
-        showToast?.({ status: 'error', description: 'Failed to create checkout session.' });
+        showToast?.({
+          status: "error",
+          description: "Failed to create checkout session.",
+        });
       }
     } catch (err) {
-      showToast?.({ status: 'error', description: err.message ?? 'Failed to start checkout.' });
+      showToast?.({
+        status: "error",
+        description: err.message ?? "Failed to start checkout.",
+      });
     } finally {
       setBusy(false);
     }
@@ -139,14 +163,25 @@ const BillingPage = () => {
     try {
       const successUrl = `${window.location.origin}${window.location.pathname}?checkout=success&session_id={CHECKOUT_SESSION_ID}`;
       const cancelUrl = `${window.location.origin}${window.location.pathname}?cancel=1`;
-      const res = await startPlanCheckout({ id: planId, successUrl, cancelUrl });
+      const res = await startPlanCheckout({
+        id: planId,
+        successUrl,
+        cancelUrl,
+        couponCode: couponCode?.trim() || undefined,
+      });
       if (res?.url) {
         window.location.href = res.url;
       } else {
-        showToast?.({ status: 'error', description: 'Failed to create checkout session.' });
+        showToast?.({
+          status: "error",
+          description: "Failed to create checkout session.",
+        });
       }
     } catch (err) {
-      showToast?.({ status: 'error', description: err.message ?? 'Failed to subscribe.' });
+      showToast?.({
+        status: "error",
+        description: err.message ?? "Failed to subscribe.",
+      });
     } finally {
       setBusy(false);
     }
@@ -159,7 +194,10 @@ const BillingPage = () => {
       const res = await openBillingPortal(window.location.href);
       if (res?.url) window.location.href = res.url;
     } catch (err) {
-      showToast?.({ status: 'error', description: err.message ?? 'Could not open billing portal.' });
+      showToast?.({
+        status: "error",
+        description: err.message ?? "Could not open billing portal.",
+      });
     } finally {
       setBusy(false);
     }
@@ -167,14 +205,25 @@ const BillingPage = () => {
 
   const handleCancel = async () => {
     if (busy) return;
-    if (!window.confirm('Cancel your subscription at the end of the current period?')) return;
+    if (
+      !window.confirm(
+        "Cancel your subscription at the end of the current period?",
+      )
+    )
+      return;
     setBusy(true);
     try {
       await cancelMySubscription();
-      showToast?.({ status: 'success', description: 'Subscription will end at the current period.' });
+      showToast?.({
+        status: "success",
+        description: "Subscription will end at the current period.",
+      });
       await loadAll();
     } catch (err) {
-      showToast?.({ status: 'error', description: err.message ?? 'Failed to cancel subscription.' });
+      showToast?.({
+        status: "error",
+        description: err.message ?? "Failed to cancel subscription.",
+      });
     } finally {
       setBusy(false);
     }
@@ -191,7 +240,9 @@ const BillingPage = () => {
   if (error) {
     return (
       <div className="mx-auto max-w-4xl p-6">
-        <div className="rounded-md border border-rose-300 bg-rose-50 p-4 text-rose-800">{error}</div>
+        <div className="rounded-md border border-rose-300 bg-rose-50 p-4 text-rose-800">
+          {error}
+        </div>
       </div>
     );
   }
@@ -223,16 +274,24 @@ const BillingPage = () => {
             Credit balance
             <InfoTip content="Credits are consumed by Zoom class minutes." />
           </p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{balance.toLocaleString()}</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">
+            {balance.toLocaleString()}
+          </p>
           <p className="mt-1 text-xs text-slate-500">Currency: {currency}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-sm font-medium text-slate-500">
             Platform fee
-            <InfoTip content={`A ${platformFeePercent}% platform fee is applied on every paid transaction.`} />
+            <InfoTip
+              content={`A ${platformFeePercent}% platform fee is applied on every paid transaction.`}
+            />
           </p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{platformFeePercent}%</p>
-          <p className="mt-1 text-xs text-slate-500">Applied automatically at checkout.</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">
+            {platformFeePercent}%
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Applied automatically at checkout.
+          </p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-sm font-medium text-slate-500">
@@ -242,7 +301,9 @@ const BillingPage = () => {
           <div className="mt-2 flex items-center gap-2">
             {subscription?.plan ? (
               <>
-                <span className="text-xl font-semibold text-slate-900">{subscription.plan.name}</span>
+                <span className="text-xl font-semibold text-slate-900">
+                  {subscription.plan.name}
+                </span>
                 <StatusPill status={subscription.status} />
               </>
             ) : (
@@ -251,7 +312,8 @@ const BillingPage = () => {
           </div>
           {subscription?.currentPeriodEnd ? (
             <p className="mt-1 text-xs text-slate-500">
-              Renews {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+              Renews{" "}
+              {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
             </p>
           ) : null}
           {subscription && canSubscribe ? (
@@ -267,6 +329,61 @@ const BillingPage = () => {
         </div>
       </div>
 
+      {canPurchase &&
+      (marketingCoupons.length > 0 ||
+        packages.length > 0 ||
+        plans.length > 0) ? (
+        <Section
+          title="Promotions & coupons"
+          info="Redeem a coupon code at checkout. Featured promotions appear below."
+        >
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="text-sm">
+              <span className="block text-slate-600">Coupon code</span>
+              <input
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                placeholder="e.g. LAUNCH25"
+                className="mt-1 w-56 rounded-md border border-slate-300 px-2 py-1 text-sm uppercase tracking-wider"
+              />
+            </label>
+            <p className="text-xs text-slate-500">
+              The code is applied automatically to your next checkout.
+            </p>
+          </div>
+          {marketingCoupons.length > 0 ? (
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {marketingCoupons.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setCouponCode(c.code)}
+                  className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-left transition hover:border-amber-400"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                    {c.marketingTitle ?? c.name}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {c.marketingBody ??
+                      (c.discountType === "PERCENT"
+                        ? `${c.percentOff}% off`
+                        : `${formatMoney(c.amountOffCents, c.currency)} off`)}
+                  </p>
+                  <p className="mt-2 font-mono text-xs text-amber-800">
+                    {c.code}
+                  </p>
+                  {c.expiresAt ? (
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Expires {new Date(c.expiresAt).toLocaleDateString()}
+                    </p>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </Section>
+      ) : null}
+
       {canPurchase && packages.length > 0 ? (
         <Section
           title="Buy credits"
@@ -278,16 +395,29 @@ const BillingPage = () => {
               return (
                 <div
                   key={pkg.id}
-                  className={`flex flex-col rounded-xl border p-5 shadow-sm ${pkg.highlight ? 'border-emerald-400 bg-emerald-50' : 'border-slate-200 bg-white'}`}
+                  className={`flex flex-col rounded-xl border p-5 shadow-sm ${pkg.highlight ? "border-emerald-400 bg-emerald-50" : "border-slate-200 bg-white"}`}
                 >
-                  <h3 className="text-base font-semibold text-slate-900">{pkg.name}</h3>
-                  <p className="mt-1 line-clamp-2 text-xs text-slate-600">{pkg.description}</p>
-                  <p className="mt-3 text-2xl font-bold text-slate-900">{formatMoney(pkg.priceCents, pkg.currency)}</p>
+                  <h3 className="text-base font-semibold text-slate-900">
+                    {pkg.name}
+                  </h3>
+                  <p className="mt-1 line-clamp-2 text-xs text-slate-600">
+                    {pkg.description}
+                  </p>
+                  <p className="mt-3 text-2xl font-bold text-slate-900">
+                    {formatMoney(pkg.priceCents, pkg.currency)}
+                  </p>
                   <p className="text-xs text-slate-500">
                     {pkg.credits.toLocaleString()} credits
-                    {pkg.bonusCredits ? <span className="text-emerald-700"> + {pkg.bonusCredits} bonus</span> : null}
+                    {pkg.bonusCredits ? (
+                      <span className="text-emerald-700">
+                        {" "}
+                        + {pkg.bonusCredits} bonus
+                      </span>
+                    ) : null}
                   </p>
-                  <p className="mt-1 text-[11px] text-slate-400">{totalCredits.toLocaleString()} total</p>
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    {totalCredits.toLocaleString()} total
+                  </p>
                   <button
                     type="button"
                     onClick={() => handleBuyPackage(pkg.id)}
@@ -312,21 +442,35 @@ const BillingPage = () => {
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className={`flex flex-col rounded-xl border p-5 shadow-sm ${plan.highlight ? 'border-emerald-400 bg-emerald-50' : 'border-slate-200 bg-white'}`}
+                className={`flex flex-col rounded-xl border p-5 shadow-sm ${plan.highlight ? "border-emerald-400 bg-emerald-50" : "border-slate-200 bg-white"}`}
               >
-                <h3 className="text-base font-semibold text-slate-900">{plan.name}</h3>
-                <p className="mt-1 line-clamp-2 text-xs text-slate-600">{plan.description}</p>
+                <h3 className="text-base font-semibold text-slate-900">
+                  {plan.name}
+                </h3>
+                <p className="mt-1 line-clamp-2 text-xs text-slate-600">
+                  {plan.description}
+                </p>
                 <p className="mt-3 text-2xl font-bold text-slate-900">
                   {formatMoney(plan.priceCents, plan.currency)}
                   <span className="text-sm font-normal text-slate-500">
-                    /{plan.interval === 'YEARLY' ? 'yr' : 'mo'}
+                    /{plan.interval === "YEARLY" ? "yr" : "mo"}
                   </span>
                 </p>
                 <ul className="mt-3 space-y-1 text-xs text-slate-600">
-                  <li>{plan.monthlyClassMinutes?.toLocaleString() ?? 0} minutes / period</li>
-                  <li>{plan.monthlyCredits?.toLocaleString() ?? 0} credits / period</li>
-                  {plan.maxTeachers ? <li>Up to {plan.maxTeachers} teachers</li> : null}
-                  {plan.maxStudents ? <li>Up to {plan.maxStudents} students</li> : null}
+                  <li>
+                    {plan.monthlyClassMinutes?.toLocaleString() ?? 0} minutes /
+                    period
+                  </li>
+                  <li>
+                    {plan.monthlyCredits?.toLocaleString() ?? 0} credits /
+                    period
+                  </li>
+                  {plan.maxTeachers ? (
+                    <li>Up to {plan.maxTeachers} teachers</li>
+                  ) : null}
+                  {plan.maxStudents ? (
+                    <li>Up to {plan.maxStudents} students</li>
+                  ) : null}
                 </ul>
                 <button
                   type="button"
@@ -334,7 +478,11 @@ const BillingPage = () => {
                   disabled={busy || plan.priceCents === 0}
                   className="mt-4 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-slate-800 disabled:opacity-50"
                 >
-                  {plan.priceCents === 0 ? 'Free tier' : subscription?.planId === plan.id ? 'Current plan' : 'Subscribe'}
+                  {plan.priceCents === 0
+                    ? "Free tier"
+                    : subscription?.planId === plan.id
+                      ? "Current plan"
+                      : "Subscribe"}
                 </button>
               </div>
             ))}
@@ -342,7 +490,10 @@ const BillingPage = () => {
         </Section>
       ) : null}
 
-      <Section title="Recent payments" info="Most recent 10 transactions on your account.">
+      <Section
+        title="Recent payments"
+        info="Most recent 10 transactions on your account."
+      >
         {recentPayments.length === 0 ? (
           <p className="text-sm text-slate-500">No payments yet.</p>
         ) : (
@@ -359,7 +510,9 @@ const BillingPage = () => {
                   </th>
                   <th className="py-2 pr-4">
                     Platform fee
-                    <InfoTip content={`Platform fee retained (${platformFeePercent}%).`} />
+                    <InfoTip
+                      content={`Platform fee retained (${platformFeePercent}%).`}
+                    />
                   </th>
                   <th className="py-2 pr-4">
                     Net
@@ -370,18 +523,37 @@ const BillingPage = () => {
               </thead>
               <tbody>
                 {recentPayments.map((p) => (
-                  <tr key={p.id} className="border-b border-slate-100 text-slate-700">
-                    <td className="py-2 pr-4 whitespace-nowrap text-xs">{new Date(p.createdAt).toLocaleString()}</td>
+                  <tr
+                    key={p.id}
+                    className="border-b border-slate-100 text-slate-700"
+                  >
+                    <td className="py-2 pr-4 whitespace-nowrap text-xs">
+                      {new Date(p.createdAt).toLocaleString()}
+                    </td>
                     <td className="py-2 pr-4">
-                      <TruncatedCell value={p.description ?? '—'} maxWidth="14rem" />
+                      <TruncatedCell
+                        value={p.description ?? "—"}
+                        maxWidth="14rem"
+                      />
                     </td>
                     <td className="py-2 pr-4 font-mono text-xs">
-                      <TruncatedCell value={p.reference ?? '—'} maxWidth="10rem" />
+                      <TruncatedCell
+                        value={p.reference ?? "—"}
+                        maxWidth="10rem"
+                      />
                     </td>
-                    <td className="py-2 pr-4 whitespace-nowrap">{formatMoneyDecimal(p.amount, p.currency)}</td>
-                    <td className="py-2 pr-4 whitespace-nowrap">{formatMoneyDecimal(p.platformFeeAmount, p.currency)}</td>
-                    <td className="py-2 pr-4 whitespace-nowrap">{formatMoneyDecimal(p.netAmount, p.currency)}</td>
-                    <td className="py-2 pr-4"><StatusPill status={p.status} /></td>
+                    <td className="py-2 pr-4 whitespace-nowrap">
+                      {formatMoneyDecimal(p.amount, p.currency)}
+                    </td>
+                    <td className="py-2 pr-4 whitespace-nowrap">
+                      {formatMoneyDecimal(p.platformFeeAmount, p.currency)}
+                    </td>
+                    <td className="py-2 pr-4 whitespace-nowrap">
+                      {formatMoneyDecimal(p.netAmount, p.currency)}
+                    </td>
+                    <td className="py-2 pr-4">
+                      <StatusPill status={p.status} />
+                    </td>
                   </tr>
                 ))}
               </tbody>

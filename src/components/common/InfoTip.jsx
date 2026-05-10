@@ -1,5 +1,4 @@
-import React from 'react';
-import Tooltip from './Tooltip';
+import Tooltip from "./Tooltip";
 
 /**
  * Small "(i)" info icon that reveals a tooltip on hover/focus.
@@ -7,7 +6,12 @@ import Tooltip from './Tooltip';
  * Usage:
  *   <span>Platform Fee <InfoTip content="A 10% platform fee applies to all transactions." /></span>
  */
-const InfoTip = ({ content, label = 'More information', side = 'top', className = '' }) => (
+const InfoTip = ({
+  content,
+  label = "More information",
+  side = "top",
+  className = "",
+}) => (
   <Tooltip content={content} side={side} className={className}>
     <button
       type="button"

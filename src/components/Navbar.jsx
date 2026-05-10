@@ -1,10 +1,28 @@
-import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
-import { FaArrowRight, FaBars, FaBell, FaChalkboardTeacher, FaChartBar, FaChevronDown, FaCog, FaEnvelope, FaGraduationCap, FaHome, FaInfoCircle, FaLock, FaSignOutAlt, FaTag, FaTimes, FaUser, FaUsers } from 'react-icons/fa';
-import { HiOutlineAcademicCap } from 'react-icons/hi';
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import ChangePasswordModal from './common/ChangePasswordModal';
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import {
+    FaArrowRight,
+    FaBars,
+    FaBell,
+    FaChalkboardTeacher,
+    FaChartBar,
+    FaChevronDown,
+    FaCog,
+    FaEnvelope,
+    FaGraduationCap,
+    FaHome,
+    FaInfoCircle,
+    FaLock,
+    FaSignOutAlt,
+    FaTag,
+    FaTimes,
+    FaUser,
+    FaUsers,
+} from "react-icons/fa";
+import { HiOutlineAcademicCap } from "react-icons/hi";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import ChangePasswordModal from "./common/ChangePasswordModal";
 
 const Navbar = () => {
   const { user, userRole, userDetails, signOut } = useAuth();
@@ -23,9 +41,9 @@ const Navbar = () => {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, [scrolled]);
 
@@ -40,55 +58,67 @@ const Navbar = () => {
 
   // Get dashboard link based on user role
   const getDashboardLink = () => {
-    if (!userRole) return '/dashboard';
-    
+    if (!userRole) return "/dashboard";
+
     switch (userRole) {
-      case 'super_admin':
-        return '/super-admin/dashboard';
-      case 'academy_owner':
-        return '/academy/dashboard';
-      case 'teacher':
-        return '/teacher/dashboard';
-      case 'student':
-        return '/student/dashboard';
+      case "super_admin":
+        return "/super-admin/dashboard";
+      case "academy_owner":
+        return "/academy/dashboard";
+      case "teacher":
+        return "/teacher/dashboard";
+      case "student":
+        return "/student/dashboard";
       default:
-        return '/dashboard';
+        return "/dashboard";
     }
   };
 
   // Get user display name
   const getUserDisplayName = () => {
-    if (!user) return '';
-    
+    if (!user) return "";
+
     if (userDetails?.name) return userDetails.name;
     if (userDetails?.full_name) return userDetails.full_name;
-    
-    return user.email.split('@')[0];
+
+    return user.email.split("@")[0];
   };
 
-  const avatarUrl = userDetails?.profilePhotoUrl ?? user?.profilePhotoUrl ?? null;
+  const avatarUrl =
+    userDetails?.profilePhotoUrl ?? user?.profilePhotoUrl ?? null;
 
   const getAvatarInitials = () => {
-    if (!user) return 'YOU';
+    if (!user) return "YOU";
     const source = getUserDisplayName();
     const parts = source.split(/\s+/).filter(Boolean);
     if (parts.length === 0) {
-      return (user.email ?? '').slice(0, 2).toUpperCase();
+      return (user.email ?? "").slice(0, 2).toUpperCase();
     }
-    const initials = (parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : '');
+    const initials =
+      (parts[0]?.[0] ?? "") +
+      (parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "");
     return initials.toUpperCase();
   };
 
-  const dashboardPrefixes = ['/dashboard', '/academy', '/teacher', '/student', '/super-admin'];
-  const isDashboardRoute = dashboardPrefixes.some((prefix) => location.pathname.startsWith(prefix));
-  const navOffsetClasses = isDashboardRoute ? 'lg:left-64 lg:w-[calc(100%-16rem)]' : '';
+  const dashboardPrefixes = [
+    "/dashboard",
+    "/academy",
+    "/teacher",
+    "/student",
+    "/super-admin",
+  ];
+  const isDashboardRoute = dashboardPrefixes.some((prefix) =>
+    location.pathname.startsWith(prefix),
+  );
+  const navOffsetClasses = isDashboardRoute
+    ? "lg:left-64 lg:w-[calc(100%-16rem)]"
+    : "";
 
   return (
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-
       className={`fixed z-50 w-full transition-all duration-300 ${navOffsetClasses} ${
         scrolled
           ? "bg-white/95 backdrop-blur-xl shadow-md border-b border-emerald-100"
@@ -183,6 +213,12 @@ const Navbar = () => {
                         >
                           Reports
                         </Link>
+                        <Link
+                          to="/super-admin/billing"
+                          className="px-3 py-2 text-sm font-medium text-gray-700 transition-all duration-200 border-b-2 border-transparent hover:text-primary-600 hover:border-primary-500"
+                        >
+                          Billing
+                        </Link>
                       </>
                     )}
                     {userRole === "academy_owner" && (
@@ -191,6 +227,22 @@ const Navbar = () => {
                         className="px-3 py-2 text-sm font-medium text-gray-700 transition-all duration-200 border-b-2 border-transparent hover:text-primary-600 hover:border-primary-500"
                       >
                         Subscription
+                      </Link>
+                    )}
+                    {(userRole === "academy_owner" ||
+                      userRole === "teacher" ||
+                      userRole === "student") && (
+                      <Link
+                        to={
+                          userRole === "academy_owner"
+                            ? "/academy/billing"
+                            : userRole === "teacher"
+                              ? "/teacher/billing"
+                              : "/student/billing"
+                        }
+                        className="px-3 py-2 text-sm font-medium text-gray-700 transition-all duration-200 border-b-2 border-transparent hover:text-primary-600 hover:border-primary-500"
+                      >
+                        Billing
                       </Link>
                     )}
                   </>
@@ -345,6 +397,13 @@ const Navbar = () => {
                                   <FaChartBar className="w-4 h-4 mr-3 text-gray-400" />
                                   Reports &amp; billing
                                 </Link>
+                                <Link
+                                  to="/super-admin/billing"
+                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600"
+                                >
+                                  <FaChartBar className="w-4 h-4 mr-3 text-gray-400" />
+                                  Platform billing
+                                </Link>
                               </>
                             )}
                           </div>
@@ -497,6 +556,13 @@ const Navbar = () => {
                           Reports &amp; billing
                         </span>
                       </Link>
+                      <Link
+                        to="/super-admin/billing"
+                        className="flex items-center space-x-3 px-3 py-2.5 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition-all duration-200"
+                      >
+                        <FaChartBar className="w-5 h-5 text-gray-400" />
+                        <span className="font-medium">Platform billing</span>
+                      </Link>
                     </>
                   )}
                   {userRole === "academy_owner" && (
@@ -506,6 +572,23 @@ const Navbar = () => {
                     >
                       <FaGraduationCap className="w-5 h-5 text-gray-400" />
                       <span className="font-medium">Subscription</span>
+                    </Link>
+                  )}
+                  {(userRole === "academy_owner" ||
+                    userRole === "teacher" ||
+                    userRole === "student") && (
+                    <Link
+                      to={
+                        userRole === "academy_owner"
+                          ? "/academy/billing"
+                          : userRole === "teacher"
+                            ? "/teacher/billing"
+                            : "/student/billing"
+                      }
+                      className="flex items-center space-x-3 px-3 py-2.5 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition-all duration-200"
+                    >
+                      <FaChartBar className="w-5 h-5 text-gray-400" />
+                      <span className="font-medium">Billing</span>
                     </Link>
                   )}
                 </>
@@ -634,4 +717,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-

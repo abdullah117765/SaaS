@@ -1,21 +1,21 @@
-import React, { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useNavigate,
-  Navigate,
-  useLocation,
+    Navigate,
+    Route,
+    BrowserRouter as Router,
+    Routes,
+    useLocation,
+    useNavigate,
 } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { ToastProvider } from "./contexts/ToastContext";
+import Footer from "./components/Footer";
+import Navbar from "./components/Navbar";
 import PrivateRoute from "./components/PrivateRoute";
 import RoleBasedRoute from "./components/RoleBasedRoute";
 import SubscriptionEnforcement from "./components/SubscriptionEnforcement";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import DashboardFooter from "./components/dashboard/DashboardFooter";
 import ToastContainer from "./components/common/ToastContainer";
+import DashboardFooter from "./components/dashboard/DashboardFooter";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ToastProvider } from "./contexts/ToastContext";
 import { setupDatabase } from "./utils/setupDatabase";
 
 // Lazy load pages for better performance
