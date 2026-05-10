@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
+import InfoTip from "../../components/common/InfoTip";
 import Pagination from "../../components/common/Pagination";
+import TruncatedCell from "../../components/common/TruncatedCell";
 import SuperAdminLayout from "../../components/super-admin/SuperAdminLayout";
 import { useToast } from "../../contexts/ToastContext";
 import useDebouncedValue from "../../hooks/useDebouncedValue";
@@ -42,6 +44,7 @@ const resolveUserContext = (user) => {
     user.academy?.name ??
     user.academyName ??
     user.academyTitle ??
+    user.academies?.[0]?.academyName ??
     (user.role === "ACADEMY_OWNER" ? `${displayName}'s Academy` : "Unassigned");
   const ownerName =
     user.academyOwner?.name ??
@@ -72,6 +75,8 @@ const SuperAdminUsersPage = () => {
   const [refreshFlag, setRefreshFlag] = useState(0);
   const [academyFilter, setAcademyFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
+  const [academyOptions, setAcademyOptions] = useState([]);
+  const [ownerOptions, setOwnerOptions] = useState([]);
 
   const debouncedSearch = useDebouncedValue(search, 400);
   const { showToast } = useToast();
@@ -99,6 +104,12 @@ const SuperAdminUsersPage = () => {
         }
         if (debouncedSearch) {
           params.append("search", debouncedSearch);
+        }
+        if (academyFilter !== "all") {
+          params.append("academyId", academyFilter);
+        }
+        if (ownerFilter !== "all") {
+          params.append("ownerId", ownerFilter);
         }
 
         let endpoint = "/users";
@@ -141,7 +152,52 @@ const SuperAdminUsersPage = () => {
     return () => {
       active = false;
     };
-  }, [role, status, debouncedSearch, page, pageSize, refreshFlag, showToast]);
+  }, [
+    role,
+    status,
+    debouncedSearch,
+    page,
+    pageSize,
+    refreshFlag,
+    showToast,
+    academyFilter,
+    ownerFilter,
+  ]);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchFilterOptions = async () => {
+      try {
+        const [ownersResponse, academiesResponse] = await Promise.all([
+          apiRequest("/users/admins?page=1&limit=100"),
+          apiRequest("/academies/admin?page=1&limit=100"),
+        ]);
+
+        if (!active) return;
+
+        const owners = (ownersResponse?.data ?? []).map((owner) => ({
+          value: owner.id,
+          label: buildDisplayName(owner),
+        }));
+        setOwnerOptions(owners);
+
+        const academies = (academiesResponse?.data ?? []).map((academy) => ({
+          value: academy.id,
+          label: academy.name,
+        }));
+        setAcademyOptions(academies);
+      } catch (err) {
+        console.warn("Failed to load directory filter options", err);
+      }
+    };
+
+    fetchFilterOptions();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const statusSummary = useMemo(() => {
     if (!summary) {
@@ -176,37 +232,7 @@ const SuperAdminUsersPage = () => {
     [data],
   );
 
-  const academyOptions = useMemo(() => {
-    const set = new Set();
-    enhancedUsers.forEach((user) => {
-      if (user.academyName && user.academyName !== "Unassigned") {
-        set.add(user.academyName);
-      }
-    });
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [enhancedUsers]);
-
-  const ownerOptions = useMemo(() => {
-    const set = new Set();
-    enhancedUsers.forEach((user) => {
-      if (user.ownerName && user.ownerName !== "Unassigned") {
-        set.add(user.ownerName);
-      }
-    });
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [enhancedUsers]);
-
-  const filteredUsers = useMemo(
-    () =>
-      enhancedUsers.filter((user) => {
-        const matchesAcademy =
-          academyFilter === "all" || user.academyName === academyFilter;
-        const matchesOwner =
-          ownerFilter === "all" || user.ownerName === ownerFilter;
-        return matchesAcademy && matchesOwner;
-      }),
-    [academyFilter, ownerFilter, enhancedUsers],
-  );
+  const filteredUsers = enhancedUsers;
 
   const renderStatus = (value) => {
     const base = "inline-flex rounded-full px-3 py-1 text-xs font-semibold";
@@ -385,8 +411,8 @@ const SuperAdminUsersPage = () => {
                 >
                   <option value="all">All academies</option>
                   {academyOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </select>
@@ -397,8 +423,8 @@ const SuperAdminUsersPage = () => {
                 >
                   <option value="all">All owners</option>
                   {ownerOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </select>
@@ -425,10 +451,16 @@ const SuperAdminUsersPage = () => {
                         Role
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        Academy
+                        <span className="inline-flex items-center">
+                          Academy
+                          <InfoTip content="Resolved from academy ownership or approved memberships." />
+                        </span>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        Owner
+                        <span className="inline-flex items-center">
+                          Owner
+                          <InfoTip content="Academy owner responsible for this user context." />
+                        </span>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Email
@@ -476,19 +508,19 @@ const SuperAdminUsersPage = () => {
                         return (
                           <tr key={user.id} className="hover:bg-gray-50">
                             <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                              {displayName}
+                              <TruncatedCell value={displayName} maxWidth="12rem" className="font-medium text-gray-900" />
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                               {formatRole(user.role)}
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                              {user.academyName ?? "Unassigned"}
+                              <TruncatedCell value={user.academyName ?? "Unassigned"} maxWidth="13rem" />
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                              {user.ownerName ?? "Unassigned"}
+                              <TruncatedCell value={user.ownerName ?? "Unassigned"} maxWidth="12rem" />
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                              {user.email}
+                              <TruncatedCell value={user.email} maxWidth="14rem" />
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm">
                               {renderStatus(user.status)}

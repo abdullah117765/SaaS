@@ -3,7 +3,9 @@ import { motion } from "framer-motion";
 import { FaEye, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import apiRequest from "../../utils/apiClient";
 import useDebouncedValue from "../../hooks/useDebouncedValue";
+import InfoTip from "../../components/common/InfoTip";
 import Pagination from "../../components/common/Pagination";
+import TruncatedCell from "../../components/common/TruncatedCell";
 import SuperAdminLayout from "../../components/super-admin/SuperAdminLayout";
 
 const statusOptions = [
@@ -336,7 +338,10 @@ const SuperAdminAcademiesPage = () => {
                         Academy
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        Owner
+                        <span className="inline-flex items-center">
+                          Owner
+                          <InfoTip content="Primary academy owner profile and contact details." />
+                        </span>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Status
@@ -373,10 +378,10 @@ const SuperAdminAcademiesPage = () => {
                         <tr key={academy.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 text-sm text-gray-900">
                             <div className="font-semibold text-gray-900">
-                              {academy.name}
+                              <TruncatedCell value={academy.name} maxWidth="16rem" className="font-semibold text-gray-900" />
                             </div>
                             <div className="text-xs uppercase tracking-wide text-gray-500">
-                              {academy.slug}
+                              <TruncatedCell value={academy.slug} maxWidth="14rem" />
                             </div>
                             {academy.description ? (
                               <p className="mt-1 line-clamp-2 text-xs text-gray-600">
@@ -386,14 +391,14 @@ const SuperAdminAcademiesPage = () => {
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-700">
                             <div className="font-medium text-gray-900">
-                              {renderOwnerName(academy.owner)}
+                              <TruncatedCell value={renderOwnerName(academy.owner)} maxWidth="14rem" className="font-medium text-gray-900" />
                             </div>
                             <div className="text-xs text-gray-500">
-                              {academy.owner?.email ?? "—"}
+                              <TruncatedCell value={academy.owner?.email ?? "—"} maxWidth="14rem" />
                             </div>
                             {academy.owner?.phoneNumber ? (
                               <div className="text-xs text-gray-500">
-                                {academy.owner.phoneNumber}
+                                <TruncatedCell value={academy.owner.phoneNumber} maxWidth="10rem" />
                               </div>
                             ) : null}
                           </td>
