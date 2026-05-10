@@ -32,6 +32,12 @@ const CookiePolicyPage = lazy(() => import("./pages/CookiePolicyPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const AcademySubscription = lazy(() => import("./pages/AcademySubscription"));
+const BillingPage = lazy(() => import("./pages/BillingPage"));
+const SuperAdminBillingPage = lazy(() =>
+  import("./pages/super-admin/SuperAdminBillingPage").catch(() => ({
+    default: () => <div className="p-8">Platform Billing - Coming Soon</div>,
+  })),
+);
 
 // Role-specific dashboards - these will be created later
 const SuperAdminDashboard = lazy(() =>
@@ -442,6 +448,15 @@ const AppContent = () => {
             />
 
             <Route
+              path="/super-admin/billing"
+              element={
+                <RoleBasedRoute requiredRole="super_admin">
+                  <SuperAdminBillingPage />
+                </RoleBasedRoute>
+              }
+            />
+
+            <Route
               path="/academy/dashboard"
               element={
                 <RoleBasedRoute requiredRole="academy_owner">
@@ -475,6 +490,32 @@ const AppContent = () => {
               element={
                 <RoleBasedRoute requiredRole="student">
                   <StudentDashboard />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Role-aware billing - same component, role gating inside */}
+            <Route
+              path="/academy/billing"
+              element={
+                <RoleBasedRoute requiredRole="academy_owner">
+                  <BillingPage />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/teacher/billing"
+              element={
+                <RoleBasedRoute requiredRole="teacher">
+                  <BillingPage />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/student/billing"
+              element={
+                <RoleBasedRoute requiredRole="student">
+                  <BillingPage />
                 </RoleBasedRoute>
               }
             />
