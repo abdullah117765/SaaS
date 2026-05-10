@@ -7,12 +7,12 @@ import {
     FaChevronLeft,
     FaCog,
     FaCreditCard,
-  FaDollarSign,
+    FaDollarSign,
     FaEnvelope,
-  FaLayerGroup,
+    FaLayerGroup,
     FaSignOutAlt,
-  FaTag,
     FaTachometerAlt,
+    FaTag,
     FaUsers,
 } from "react-icons/fa";
 import { NavLink, useLocation } from "react-router-dom";
