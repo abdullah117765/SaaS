@@ -1,15 +1,15 @@
-import React from "react";
 import { AnimatePresence } from "framer-motion";
 
 // Import tab components
-import OverviewTab from "./OverviewTab";
-import UsersTab from "./UsersTab";
-import NotificationsTab from "./NotificationsTab";
-import PaymentsTab from "./PaymentsTab";
-import ZoomCreditsTab from "./ZoomCreditsTab";
-import ClassesTab from "./ClassesTab";
-import ResourcesTab from "./ResourcesTab";
 import AcademySettingsTab from "./AcademySettingsTab";
+import ClassesTab from "./ClassesTab";
+import CreditManagementTab from "./CreditManagementTab";
+import NotificationsTab from "./NotificationsTab";
+import OverviewTab from "./OverviewTab";
+import PaymentsTab from "./PaymentsTab";
+import ResourcesTab from "./ResourcesTab";
+import UsersTab from "./UsersTab";
+import ZoomCreditsTab from "./ZoomCreditsTab";
 
 const TabContent = ({
   activeTab,
@@ -51,6 +51,7 @@ const TabContent = ({
   academySettingsError,
   onRefreshAcademySettings,
   onUpdateAcademySettings,
+  academyId,
   requestedUsersTab = "teachers",
   onNavigateTab = () => {},
 }) => {
@@ -108,6 +109,10 @@ const TabContent = ({
             zoomCredits={zoomCredits}
             onPurchaseCredits={onPurchaseCredits}
           />
+        );
+      case "credit-management":
+        return (
+          <CreditManagementTab key="credit-management" academyId={academyId} />
         );
       case "classes":
         return (

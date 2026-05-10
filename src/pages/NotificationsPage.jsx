@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { FaBell, FaCheckDouble, FaCircle } from "react-icons/fa";
 import {
-  listNotifications,
-  markAllNotificationsRead,
-  markNotificationRead,
+    listNotifications,
+    markAllNotificationsRead,
+    markNotificationRead,
 } from "../utils/notificationsApi";
 
 const TYPE_LABEL = {

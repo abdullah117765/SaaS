@@ -1,5 +1,5 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
 import SuperAdminLayout from "../../components/super-admin/SuperAdminLayout";
 import apiRequest from "../../utils/apiClient";
 
@@ -228,7 +228,7 @@ const SuperAdminPlatformSettingsPage = () => {
 
   return (
     <SuperAdminLayout>
-      <div className="max-w-5xl py-8">
+      <div className="w-full py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-green-800">
             Platform Settings
@@ -285,8 +285,8 @@ const SuperAdminPlatformSettingsPage = () => {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
                 {SETTINGS_METADATA.map((setting) => renderField(setting))}
               </div>
 
@@ -324,7 +324,3 @@ const SuperAdminPlatformSettingsPage = () => {
 };
 
 export default SuperAdminPlatformSettingsPage;
-
-
-
-

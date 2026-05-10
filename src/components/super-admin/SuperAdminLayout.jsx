@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { FaBars } from "react-icons/fa";
-import SuperAdminSidebar from "./SuperAdminSidebar";
-import useWindowSize from "../academy/useWindowSize";
 import { contentVariants } from "../academy/animationVariants";
+import useWindowSize from "../academy/useWindowSize";
+import SuperAdminSidebar from "./SuperAdminSidebar";
 
 const SuperAdminLayout = ({ children }) => {
   const { isMobile } = useWindowSize();

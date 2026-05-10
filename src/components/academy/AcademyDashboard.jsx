@@ -1,15 +1,15 @@
-﻿import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 
 // Import custom hooks
-import useWindowSize from "./useWindowSize";
 import useAcademyData from "./useAcademyData";
 import useAcademySettings from "./useAcademySettings";
+import useWindowSize from "./useWindowSize";
 
 // Import components
-import Sidebar from "./Sidebar";
 import DashboardHeader from "./DashboardHeader";
+import Sidebar from "./Sidebar";
 import TabContent from "./TabContent";
 
 // Import animation variants
@@ -107,7 +107,9 @@ const AcademyDashboard = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600">Loading academy dashboard...</p>
+          <p className="mt-4 text-lg text-gray-600">
+            Loading academy dashboard...
+          </p>
         </div>
       </div>
     );
@@ -153,6 +155,7 @@ const AcademyDashboard = () => {
 
         <TabContent
           activeTab={activeTab}
+          academyId={academyData?.id}
           teacherCount={teacherCount}
           studentCount={studentCount}
           classes={classes}

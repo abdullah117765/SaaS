@@ -1,13 +1,14 @@
-import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { useAuth } from "../contexts/AuthContext";
-import useTeacherDashboardData from "../components/teacher/useTeacherDashboardData";
+import { useEffect, useMemo, useState } from "react";
+import { FaPlus, FaTrash } from "react-icons/fa";
+import ProfileTab from "../components/profile/ProfileTab";
+import TeacherAcademiesTab from "../components/teacher/TeacherAcademiesTab";
 import TeacherClassesTab from "../components/teacher/TeacherClassesTab";
 import TeacherCreditUsageChart from "../components/teacher/TeacherCreditUsageChart";
 import TeacherResourcesTab from "../components/teacher/TeacherResourcesTab";
-import TeacherAcademiesTab from "../components/teacher/TeacherAcademiesTab";
+import useTeacherDashboardData from "../components/teacher/useTeacherDashboardData";
 import useTeacherResources from "../components/teacher/useTeacherResources";
-import ProfileTab from "../components/profile/ProfileTab";
+import { useAuth } from "../contexts/AuthContext";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -40,6 +41,18 @@ const TeacherDashboard = () => {
     academyLimits,
   } = useAuth();
   const [activeTab, setActiveTab] = useState("classes");
+  const [selectedStudents, setSelectedStudents] = useState([]);
+  const [showBulkClassModal, setShowBulkClassModal] = useState(false);
+  const [bulkClassForm, setBulkClassForm] = useState({
+    title: "",
+    description: "",
+    date: new Date().toISOString().slice(0, 10),
+    startTime: new Date().toISOString().slice(11, 16),
+    duration: 60,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC",
+    creditsConsumed: "",
+  });
+  const [bulkClassSubmitting, setBulkClassSubmitting] = useState(false);
   const {
     loading,
     loadingAcademies,
@@ -83,7 +96,8 @@ const TeacherDashboard = () => {
     return upcoming[0] ?? classes[0];
   }, [classes]);
 
-  const [studentFiltersDraft, setStudentFiltersDraft] = useState(studentFilters);
+  const [studentFiltersDraft, setStudentFiltersDraft] =
+    useState(studentFilters);
 
   useEffect(() => {
     setStudentFiltersDraft(studentFilters);
@@ -113,17 +127,18 @@ const TeacherDashboard = () => {
     ];
   }, [academyOptions, activeAcademyId]);
 
-  const avatarUrl = (user?.profilePhotoUrl ?? userDetails?.profilePhotoUrl) ?? null;
+  const avatarUrl =
+    user?.profilePhotoUrl ?? userDetails?.profilePhotoUrl ?? null;
   const avatarInitials = useMemo(() => {
     const parts = [user?.firstName, user?.lastName].filter(Boolean);
     if (parts.length > 0) {
       return parts
-        .map((part) => (part ? part.charAt(0) : ''))
-        .join('')
+        .map((part) => (part ? part.charAt(0) : ""))
+        .join("")
         .slice(0, 2)
         .toUpperCase();
     }
-    const fallback = user?.email ?? 'You';
+    const fallback = user?.email ?? "You";
     return fallback.slice(0, 2).toUpperCase();
   }, [user?.email, user?.firstName, user?.lastName]);
 
@@ -204,7 +219,9 @@ const TeacherDashboard = () => {
           ) : null}
         </div>
         <div className="text-sm text-gray-500">
-          {(studentsMeta?.total ?? metrics.studentCount ?? students.length) || 0} total
+          {(studentsMeta?.total ?? metrics.studentCount ?? students.length) ||
+            0}{" "}
+          total
         </div>
       </div>
       <div className="border-b border-gray-100 px-6 py-4">
@@ -262,38 +279,83 @@ const TeacherDashboard = () => {
               className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
               {academyFilterOptions.map((option) => (
-                <option key={option.value} value={option.value} disabled={option.disabled}>
+                <option
+                  key={option.value}
+                  value={option.value}
+                  disabled={option.disabled}
+                >
                   {option.label}
                 </option>
               ))}
             </select>
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={applyStudentFilters}
-            disabled={!studentFiltersChanged}
-            className="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
-          >
-            Apply filters
-          </button>
-          <button
-            type="button"
-            onClick={resetStudentFiltersHandler}
-            className="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-100"
-          >
-            Reset
-          </button>
-          <span className="text-xs text-gray-500">
-            Showing {students.length} of {studentsMeta?.total ?? students.length} students
-          </span>
+        <div className="flex justify-between items-center">
+          <div>
+            <button
+              type="button"
+              onClick={applyStudentFilters}
+              disabled={!studentFiltersChanged}
+              className="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
+            >
+              Apply filters
+            </button>
+            <button
+              type="button"
+              onClick={resetStudentFiltersHandler}
+              className="ml-2 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-100"
+            >
+              Reset
+            </button>
+            <span className="ml-4 text-xs text-gray-500">
+              Showing {students.length} of{" "}
+              {studentsMeta?.total ?? students.length} students
+            </span>
+          </div>
+          {selectedStudents.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">
+                {selectedStudents.length} selected
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowBulkClassModal(true)}
+                className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+              >
+                <FaPlus className="mr-2" /> Schedule class
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedStudents([])}
+                className="inline-flex items-center rounded-md border border-red-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+              >
+                <FaTrash className="mr-1" /> Clear
+              </button>
+            </div>
+          )}
         </div>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 w-8">
+                <input
+                  type="checkbox"
+                  checked={
+                    selectedStudents.length === students.length &&
+                    students.length > 0
+                  }
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedStudents(students.map((s) => s.id));
+                    } else {
+                      setSelectedStudents([]);
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                />
+              </th>
               <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                 Name
               </th>
@@ -315,7 +377,7 @@ const TeacherDashboard = () => {
             {students.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-6 py-8 text-center text-sm text-gray-500"
                 >
                   No students match your filters yet.
@@ -323,7 +385,28 @@ const TeacherDashboard = () => {
               </tr>
             ) : (
               students.map((student) => (
-                <tr key={student.id}>
+                <tr
+                  key={student.id}
+                  className={
+                    selectedStudents.includes(student.id) ? "bg-blue-50" : ""
+                  }
+                >
+                  <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedStudents.includes(student.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedStudents((prev) => [...prev, student.id]);
+                        } else {
+                          setSelectedStudents((prev) =>
+                            prev.filter((id) => id !== student.id),
+                          );
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-medium text-gray-900">
                       {student.name}
@@ -340,7 +423,8 @@ const TeacherDashboard = () => {
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                        STUDENT_STATUS_BADGES[student.status] ?? "bg-gray-100 text-gray-600"
+                        STUDENT_STATUS_BADGES[student.status] ??
+                        "bg-gray-100 text-gray-600"
                       }`}
                     >
                       {formatStatusLabel(student.status)}
@@ -379,23 +463,35 @@ const TeacherDashboard = () => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <div
-              className={`flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-emerald-200 shadow-inner ${avatarUrl ? 'bg-white' : 'bg-gradient-to-br from-emerald-500 to-emerald-600'}`}
+              className={`flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-emerald-200 shadow-inner ${avatarUrl ? "bg-white" : "bg-gradient-to-br from-emerald-500 to-emerald-600"}`}
             >
               {avatarUrl ? (
-                <img src={avatarUrl} alt="Your avatar" className="h-full w-full object-cover" />
+                <img
+                  src={avatarUrl}
+                  alt="Your avatar"
+                  className="h-full w-full object-cover"
+                />
               ) : (
-                <span className="text-base font-semibold uppercase tracking-widest text-white">{avatarInitials}</span>
+                <span className="text-base font-semibold uppercase tracking-widest text-white">
+                  {avatarInitials}
+                </span>
               )}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-emerald-700">Teacher Dashboard</h1>
-              <p className="text-gray-600">Welcome back{user?.firstName ? `, ${user.firstName}` : ''}! Stay on top of your classes and students.</p>
+              <h1 className="text-3xl font-bold text-emerald-700">
+                Teacher Dashboard
+              </h1>
+              <p className="text-gray-600">
+                Welcome back{user?.firstName ? `, ${user.firstName}` : ""}! Stay
+                on top of your classes and students.
+              </p>
             </div>
           </div>
         </div>
         {upcomingClass ? (
           <div className="max-w-xl rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-900">
-            <span className="font-semibold">Next session:</span> {upcomingClass.title} - {upcomingClass.start}
+            <span className="font-semibold">Next session:</span>{" "}
+            {upcomingClass.title} - {upcomingClass.start}
           </div>
         ) : null}
       </motion.div>
@@ -431,8 +527,13 @@ const TeacherDashboard = () => {
 
       {!loading && !loadingAcademies && !hasAcademyAccess ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          <p className="font-medium">You are not currently associated with an academy.</p>
-          <p className="mt-1 text-amber-800">Join an academy from the directory to schedule classes and upload resources.</p>
+          <p className="font-medium">
+            You are not currently associated with an academy.
+          </p>
+          <p className="mt-1 text-amber-800">
+            Join an academy from the directory to schedule classes and upload
+            resources.
+          </p>
         </div>
       ) : null}
 
@@ -501,10 +602,223 @@ const TeacherDashboard = () => {
           ) : null}
         </motion.div>
       )}
+
+      {/* Bulk Class Modal */}
+      {showBulkClassModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl"
+          >
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setBulkClassSubmitting(true);
+                try {
+                  const start = new Date(
+                    `${bulkClassForm.date}T${bulkClassForm.startTime || "00:00"}:00`,
+                  );
+                  const end = new Date(
+                    start.getTime() +
+                      Number(bulkClassForm.duration || 60) * 60000,
+                  );
+
+                  const payload = {
+                    title: bulkClassForm.title.trim(),
+                    description: bulkClassForm.description?.trim() || undefined,
+                    scheduledStart: start.toISOString(),
+                    scheduledEnd: end.toISOString(),
+                    timezone: bulkClassForm.timezone,
+                    creditsConsumed: bulkClassForm.creditsConsumed
+                      ? Number(bulkClassForm.creditsConsumed)
+                      : undefined,
+                    participants: selectedStudents.map((id) => ({
+                      userId: id,
+                    })),
+                  };
+
+                  const result = await createClass(payload);
+                  if (result?.success) {
+                    setShowBulkClassModal(false);
+                    setSelectedStudents([]);
+                    setBulkClassForm({
+                      title: "",
+                      description: "",
+                      date: new Date().toISOString().slice(0, 10),
+                      startTime: new Date().toISOString().slice(11, 16),
+                      duration: 60,
+                      timezone:
+                        Intl.DateTimeFormat().resolvedOptions().timeZone ??
+                        "UTC",
+                      creditsConsumed: "",
+                    });
+                  }
+                } finally {
+                  setBulkClassSubmitting(false);
+                }
+              }}
+            >
+              <div className="border-b border-gray-200 px-6 py-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Schedule class for {selectedStudents.length} student
+                  {selectedStudents.length !== 1 ? "s" : ""}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Create a new class and invite selected students
+                </p>
+              </div>
+              <div className="space-y-4 px-6 py-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={bulkClassForm.title}
+                    onChange={(e) =>
+                      setBulkClassForm((prev) => ({
+                        ...prev,
+                        title: e.target.value,
+                      }))
+                    }
+                    required
+                    placeholder="Class title"
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Description
+                  </label>
+                  <textarea
+                    value={bulkClassForm.description}
+                    onChange={(e) =>
+                      setBulkClassForm((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                    placeholder="Optional class description"
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Date *
+                    </label>
+                    <input
+                      type="date"
+                      value={bulkClassForm.date}
+                      onChange={(e) =>
+                        setBulkClassForm((prev) => ({
+                          ...prev,
+                          date: e.target.value,
+                        }))
+                      }
+                      required
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Start time *
+                    </label>
+                    <input
+                      type="time"
+                      value={bulkClassForm.startTime}
+                      onChange={(e) =>
+                        setBulkClassForm((prev) => ({
+                          ...prev,
+                          startTime: e.target.value,
+                        }))
+                      }
+                      required
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Duration (minutes)
+                    </label>
+                    <input
+                      type="number"
+                      min={15}
+                      step={5}
+                      value={bulkClassForm.duration}
+                      onChange={(e) =>
+                        setBulkClassForm((prev) => ({
+                          ...prev,
+                          duration: Number(e.target.value),
+                        }))
+                      }
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Timezone
+                    </label>
+                    <input
+                      type="text"
+                      value={bulkClassForm.timezone}
+                      onChange={(e) =>
+                        setBulkClassForm((prev) => ({
+                          ...prev,
+                          timezone: e.target.value,
+                        }))
+                      }
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Credits to deduct
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={bulkClassForm.creditsConsumed}
+                    onChange={(e) =>
+                      setBulkClassForm((prev) => ({
+                        ...prev,
+                        creditsConsumed: e.target.value,
+                      }))
+                    }
+                    placeholder="Optional"
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkClassModal(false)}
+                  disabled={bulkClassSubmitting}
+                  className="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={bulkClassSubmitting}
+                  className="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400"
+                >
+                  {bulkClassSubmitting ? "Creating..." : "Create class"}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default TeacherDashboard;
-
-

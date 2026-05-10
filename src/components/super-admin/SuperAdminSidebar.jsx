@@ -1,23 +1,24 @@
-import React, { useMemo } from "react";
 import { motion } from "framer-motion";
-import { NavLink, useLocation } from "react-router-dom";
+import { useMemo } from "react";
 import {
-  FaBars,
-  FaBuilding,
-  FaChartPie,
-  FaChevronLeft,
-  FaCog,
-  FaEnvelope,
-  FaSignOutAlt,
-  FaTachometerAlt,
-  FaUsers,
+    FaBars,
+    FaBuilding,
+    FaChartPie,
+    FaChevronLeft,
+    FaCog,
+    FaCreditCard,
+    FaEnvelope,
+    FaSignOutAlt,
+    FaTachometerAlt,
+    FaUsers,
 } from "react-icons/fa";
-import {
-  sidebarVariants,
-  mobileSidebarVariants,
-  navItemVariants,
-} from "../academy/animationVariants";
+import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import {
+    mobileSidebarVariants,
+    navItemVariants,
+    sidebarVariants,
+} from "../academy/animationVariants";
 
 const navItems = [
   {
@@ -43,6 +44,12 @@ const navItems = [
     label: "Reports",
     to: "/super-admin/reports",
     icon: FaChartPie,
+  },
+  {
+    key: "billing",
+    label: "Billing",
+    to: "/super-admin/billing",
+    icon: FaCreditCard,
   },
   {
     key: "platform-settings",

@@ -1,12 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
 import {
-  FaPlus,
-  FaSyncAlt,
-  FaClock,
-  FaSearch,
-  FaTrash,
-  FaEdit,
+    FaClock,
+    FaEdit,
+    FaPlus,
+    FaSearch,
+    FaSyncAlt,
+    FaTrash,
 } from "react-icons/fa";
 
 const STATUS_OPTIONS = [
@@ -61,7 +61,7 @@ const TeacherClassesTab = ({
   activeAcademyId,
   onSelectAcademy,
   hasAcademyAccess,
-  loadingAcademies = false
+  loadingAcademies = false,
 }) => {
   const [localFilters, setLocalFilters] = useState(filters);
   const [showFormModal, setShowFormModal] = useState(false);
@@ -337,21 +337,21 @@ const TeacherClassesTab = ({
           >
             Reset
           </button>
-        {meta ? (
-          <span className="ml-auto text-xs text-gray-500">
-            Showing {meta.count ?? classes.length} of{" "}
-            {meta.total ?? classes.length}
-          </span>
+          {meta ? (
+            <span className="ml-auto text-xs text-gray-500">
+              Showing {meta.count ?? classes.length} of{" "}
+              {meta.total ?? classes.length}
+            </span>
+          ) : null}
+        </div>
+        {!hasAcademyAccess && !loadingAcademies ? (
+          <p className="mt-3 text-xs text-amber-700">
+            Join an academy to enable class scheduling and roster access.
+          </p>
         ) : null}
       </div>
-      {!hasAcademyAccess && !loadingAcademies ? (
-        <p className="mt-3 text-xs text-amber-700">
-          Join an academy to enable class scheduling and roster access.
-        </p>
-      ) : null}
-    </div>
 
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-800">
@@ -583,9 +583,36 @@ const TeacherClassesTab = ({
                   ) : null}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-700">
-                    Invite students
-                  </p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium text-gray-700">
+                      Invite students
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (
+                            formValues.participants.length === students.length
+                          ) {
+                            setFormValues((prev) => ({
+                              ...prev,
+                              participants: [],
+                            }));
+                          } else {
+                            setFormValues((prev) => ({
+                              ...prev,
+                              participants: students.map((s) => s.id),
+                            }));
+                          }
+                        }}
+                        className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 font-medium transition-colors"
+                      >
+                        {formValues.participants.length === students.length
+                          ? "Deselect all"
+                          : "Select all"}
+                      </button>
+                    </div>
+                  </div>
                   <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
                     {students.length === 0 ? (
                       <p className="text-xs text-gray-500">
@@ -617,6 +644,12 @@ const TeacherClassesTab = ({
                       ))
                     )}
                   </div>
+                  {formValues.participants.length > 0 && (
+                    <p className="mt-2 text-xs text-gray-600">
+                      {formValues.participants.length} student
+                      {formValues.participants.length !== 1 ? "s" : ""} selected
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">

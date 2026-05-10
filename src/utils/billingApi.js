@@ -22,10 +22,12 @@ export const cancelMySubscription = () =>
   apiRequest("/billing/subscription/cancel", { method: "POST" });
 
 // ---- Admin ----
-export const getBillingAnalytics = ({ from, to } = {}) => {
+export const getBillingAnalytics = ({ from, to, interval, provider } = {}) => {
   const params = new URLSearchParams();
   if (from) params.set("from", from);
   if (to) params.set("to", to);
+  if (interval) params.set("interval", interval);
+  if (provider) params.set("provider", provider);
   const qs = params.toString();
   return apiRequest(`/billing/admin/analytics${qs ? `?${qs}` : ""}`);
 };

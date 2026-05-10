@@ -508,19 +508,32 @@ const SuperAdminUsersPage = () => {
                         return (
                           <tr key={user.id} className="hover:bg-gray-50">
                             <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                              <TruncatedCell value={displayName} maxWidth="12rem" className="font-medium text-gray-900" />
+                              <TruncatedCell
+                                value={displayName}
+                                maxWidth="12rem"
+                                className="font-medium text-gray-900"
+                              />
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                               {formatRole(user.role)}
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                              <TruncatedCell value={user.academyName ?? "Unassigned"} maxWidth="13rem" />
+                              <TruncatedCell
+                                value={user.academyName ?? "Unassigned"}
+                                maxWidth="13rem"
+                              />
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                              <TruncatedCell value={user.ownerName ?? "Unassigned"} maxWidth="12rem" />
+                              <TruncatedCell
+                                value={user.ownerName ?? "Unassigned"}
+                                maxWidth="12rem"
+                              />
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                              <TruncatedCell value={user.email} maxWidth="14rem" />
+                              <TruncatedCell
+                                value={user.email}
+                                maxWidth="14rem"
+                              />
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm">
                               {renderStatus(user.status)}

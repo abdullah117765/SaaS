@@ -1,12 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { FaEye, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
-import apiRequest from "../../utils/apiClient";
-import useDebouncedValue from "../../hooks/useDebouncedValue";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { FaCheckCircle, FaEye, FaTimesCircle } from "react-icons/fa";
 import InfoTip from "../../components/common/InfoTip";
 import Pagination from "../../components/common/Pagination";
 import TruncatedCell from "../../components/common/TruncatedCell";
 import SuperAdminLayout from "../../components/super-admin/SuperAdminLayout";
+import useDebouncedValue from "../../hooks/useDebouncedValue";
+import apiRequest from "../../utils/apiClient";
 
 const statusOptions = [
   { value: "ALL", label: "All statuses" },
@@ -74,7 +74,9 @@ const SuperAdminAcademiesPage = () => {
           params.append("search", debouncedSearch);
         }
 
-        const response = await apiRequest(`/academies/admin?${params.toString()}`);
+        const response = await apiRequest(
+          `/academies/admin?${params.toString()}`,
+        );
 
         if (!active) return;
 
@@ -233,7 +235,10 @@ const SuperAdminAcademiesPage = () => {
     if (!owner) {
       return "Unassigned";
     }
-    const fullName = [owner.firstName, owner.lastName].filter(Boolean).join(" ").trim();
+    const fullName = [owner.firstName, owner.lastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
     return fullName || owner.email;
   };
 
@@ -378,10 +383,17 @@ const SuperAdminAcademiesPage = () => {
                         <tr key={academy.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 text-sm text-gray-900">
                             <div className="font-semibold text-gray-900">
-                              <TruncatedCell value={academy.name} maxWidth="16rem" className="font-semibold text-gray-900" />
+                              <TruncatedCell
+                                value={academy.name}
+                                maxWidth="16rem"
+                                className="font-semibold text-gray-900"
+                              />
                             </div>
                             <div className="text-xs uppercase tracking-wide text-gray-500">
-                              <TruncatedCell value={academy.slug} maxWidth="14rem" />
+                              <TruncatedCell
+                                value={academy.slug}
+                                maxWidth="14rem"
+                              />
                             </div>
                             {academy.description ? (
                               <p className="mt-1 line-clamp-2 text-xs text-gray-600">
@@ -391,14 +403,24 @@ const SuperAdminAcademiesPage = () => {
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-700">
                             <div className="font-medium text-gray-900">
-                              <TruncatedCell value={renderOwnerName(academy.owner)} maxWidth="14rem" className="font-medium text-gray-900" />
+                              <TruncatedCell
+                                value={renderOwnerName(academy.owner)}
+                                maxWidth="14rem"
+                                className="font-medium text-gray-900"
+                              />
                             </div>
                             <div className="text-xs text-gray-500">
-                              <TruncatedCell value={academy.owner?.email ?? "—"} maxWidth="14rem" />
+                              <TruncatedCell
+                                value={academy.owner?.email ?? "—"}
+                                maxWidth="14rem"
+                              />
                             </div>
                             {academy.owner?.phoneNumber ? (
                               <div className="text-xs text-gray-500">
-                                <TruncatedCell value={academy.owner.phoneNumber} maxWidth="10rem" />
+                                <TruncatedCell
+                                  value={academy.owner.phoneNumber}
+                                  maxWidth="10rem"
+                                />
                               </div>
                             ) : null}
                           </td>
@@ -424,7 +446,9 @@ const SuperAdminAcademiesPage = () => {
                                 <button
                                   type="button"
                                   className="inline-flex items-center rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-60"
-                                  onClick={() => handleReview(academy, "APPROVED")}
+                                  onClick={() =>
+                                    handleReview(academy, "APPROVED")
+                                  }
                                   disabled={reviewingId === academy.id}
                                 >
                                   <FaCheckCircle className="mr-1 h-3.5 w-3.5" />
@@ -435,7 +459,9 @@ const SuperAdminAcademiesPage = () => {
                                 <button
                                   type="button"
                                   className="inline-flex items-center rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 hover:border-red-300 hover:bg-red-50 disabled:opacity-60"
-                                  onClick={() => handleReview(academy, "REJECTED")}
+                                  onClick={() =>
+                                    handleReview(academy, "REJECTED")
+                                  }
                                   disabled={reviewingId === academy.id}
                                 >
                                   <FaTimesCircle className="mr-1 h-3.5 w-3.5" />
@@ -505,11 +531,14 @@ const SuperAdminAcademiesPage = () => {
                             {detail?.slug}
                           </p>
                           {detail?.description ? (
-                            <p className="mt-2 text-sm text-gray-700">{detail.description}</p>
+                            <p className="mt-2 text-sm text-gray-700">
+                              {detail.description}
+                            </p>
                           ) : null}
                           <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
                             {renderStatusBadge(detail?.status)}
-                            {detail?.status === "REJECTED" && detail?.rejectionReason ? (
+                            {detail?.status === "REJECTED" &&
+                            detail?.rejectionReason ? (
                               <span className="rounded-full bg-red-50 px-2 py-1 font-medium text-red-700">
                                 {detail.rejectionReason}
                               </span>
@@ -518,7 +547,9 @@ const SuperAdminAcademiesPage = () => {
                         </div>
                         <div className="grid gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4 sm:grid-cols-2">
                           <div>
-                            <p className="text-xs font-semibold uppercase text-gray-500">Owner</p>
+                            <p className="text-xs font-semibold uppercase text-gray-500">
+                              Owner
+                            </p>
                             <p className="mt-1 font-medium text-gray-900">
                               {renderOwnerName(detail?.owner)}
                             </p>
@@ -536,7 +567,9 @@ const SuperAdminAcademiesPage = () => {
                             <ul className="mt-1 text-sm text-gray-700">
                               <li>Teachers: {detail?.teacherCount ?? 0}</li>
                               <li>Students: {detail?.studentCount ?? 0}</li>
-                              <li>Pending requests: {detail?.pendingCount ?? 0}</li>
+                              <li>
+                                Pending requests: {detail?.pendingCount ?? 0}
+                              </li>
                             </ul>
                           </div>
                         </div>
