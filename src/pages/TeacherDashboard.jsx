@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import useTeacherDashboardData from "../components/teacher/useTeacherDashboardData";
 import TeacherClassesTab from "../components/teacher/TeacherClassesTab";
+import TeacherCreditUsageChart from "../components/teacher/TeacherCreditUsageChart";
 import TeacherResourcesTab from "../components/teacher/TeacherResourcesTab";
 import TeacherAcademiesTab from "../components/teacher/TeacherAcademiesTab";
 import useTeacherResources from "../components/teacher/useTeacherResources";
@@ -442,24 +443,27 @@ const TeacherDashboard = () => {
           animate="visible"
         >
           {activeTab === "classes" ? (
-            <TeacherClassesTab
-              classes={classes}
-              students={students}
-              filters={filters}
-              onUpdateFilters={updateFilters}
-              onCreateClass={createClass}
-              onUpdateClass={updateClass}
-              onDeleteClass={deleteClass}
-              loading={loading}
-              meta={classesMeta}
-              onRefresh={refresh}
-              metrics={metrics}
-              academyOptions={academyOptions}
-              activeAcademyId={activeAcademyId}
-              onSelectAcademy={setActiveAcademyId}
-              hasAcademyAccess={hasAcademyAccess}
-              loadingAcademies={loadingAcademies}
+            <div className="space-y-6">
+              <TeacherCreditUsageChart days={14} />
+              <TeacherClassesTab
+                classes={classes}
+                students={students}
+                filters={filters}
+                onUpdateFilters={updateFilters}
+                onCreateClass={createClass}
+                onUpdateClass={updateClass}
+                onDeleteClass={deleteClass}
+                loading={loading}
+                meta={classesMeta}
+                onRefresh={refresh}
+                metrics={metrics}
+                academyOptions={academyOptions}
+                activeAcademyId={activeAcademyId}
+                onSelectAcademy={setActiveAcademyId}
+                hasAcademyAccess={hasAcademyAccess}
+                loadingAcademies={loadingAcademies}
               />
+            </div>
           ) : null}
           {activeTab === "resources" ? (
             <TeacherResourcesTab
