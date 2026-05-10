@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import apiRequest from "../../utils/apiClient";
-import useDebouncedValue from "../../hooks/useDebouncedValue";
+import { useEffect, useMemo, useState } from "react";
 import Pagination from "../../components/common/Pagination";
 import SuperAdminLayout from "../../components/super-admin/SuperAdminLayout";
 import { useToast } from "../../contexts/ToastContext";
+import useDebouncedValue from "../../hooks/useDebouncedValue";
+import apiRequest from "../../utils/apiClient";
 
 const roleOptions = [
   { value: "all", label: "All users" },
@@ -473,7 +473,6 @@ const SuperAdminUsersPage = () => {
                       filteredUsers.map((user) => {
                         const displayName = buildDisplayName(user);
                         const isSuperAdmin = user.role === "SUPER_ADMIN";
-                        const isAcademyOwner = user.role === "ACADEMY_OWNER";
                         return (
                           <tr key={user.id} className="hover:bg-gray-50">
                             <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
@@ -511,10 +510,6 @@ const SuperAdminUsersPage = () => {
                               {isSuperAdmin ? (
                                 <span className="text-xs uppercase tracking-wide text-gray-400">
                                   Protected
-                                </span>
-                              ) : !isAcademyOwner ? (
-                                <span className="text-xs text-gray-400">
-                                  Managed in academy
                                 </span>
                               ) : (
                                 <div className="flex items-center gap-2">

@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import apiRequest from "../utils/apiClient";
-import { useAuth } from "../contexts/AuthContext";
 import SuperAdminLayout from "../components/super-admin/SuperAdminLayout";
+import { useAuth } from "../contexts/AuthContext";
+import apiRequest from "../utils/apiClient";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 const currencyFormatter = new Intl.NumberFormat("en-US", {
@@ -113,7 +113,7 @@ const SuperAdminDashboard = () => {
         const [overviewResponse, academiesResponse, paymentsResponse] =
           await Promise.all([
             apiRequest("/dashboard/overview"),
-            apiRequest(`/users/admins?${queryParams}`),
+            apiRequest(`/academies/admin?${queryParams}`),
             apiRequest(`/payments?${queryParams}`),
           ]);
 
@@ -523,13 +523,13 @@ const SuperAdminDashboard = () => {
                           <tr key={academy.id}>
                             <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
                               {buildDisplayName(
-                                academy.firstName,
-                                academy.lastName,
-                                academy.email,
+                                academy.owner?.firstName,
+                                academy.owner?.lastName,
+                                academy.owner?.email,
                               )}
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                              {academy.email}
+                              {academy.owner?.email ?? "—"}
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm">
                               <span
