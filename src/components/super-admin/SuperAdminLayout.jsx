@@ -55,7 +55,7 @@ const SuperAdminLayout = ({ children }) => {
             Menu
           </button>
         ) : null}
-        <div className="mx-auto w-full max-w-7xl">{children}</div>
+        <div className="w-full">{children}</div>
       </motion.main>
     </div>
   );

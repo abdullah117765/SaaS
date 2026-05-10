@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import apiRequest from '../utils/apiClient';
 
 const ContactPage = () => {
   // Form state
@@ -9,7 +10,7 @@ const ContactPage = () => {
     email: '',
     subject: '',
     message: '',
-    userType: 'student' // Default value
+    userType: 'student'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -51,17 +52,17 @@ const ContactPage = () => {
     setSubmitError('');
 
     try {
-      // Simulate API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In a real application, you would send the form data to your backend
-      // const response = await fetch('/api/contact', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // });
-      // 
-      // if (!response.ok) throw new Error('Failed to submit form');
+      await apiRequest('/contact-messages', {
+        method: 'POST',
+        omitAuth: true,
+        body: {
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          sourceUrl: typeof window !== 'undefined' ? window.location.href : '/contact',
+        },
+      });
 
       setSubmitSuccess(true);
       setFormData({

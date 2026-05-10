@@ -7,6 +7,7 @@ import {
   FaChartPie,
   FaChevronLeft,
   FaCog,
+  FaEnvelope,
   FaSignOutAlt,
   FaTachometerAlt,
   FaUsers,
@@ -48,6 +49,12 @@ const navItems = [
     label: "Platform Settings",
     to: "/super-admin/platform-settings",
     icon: FaCog,
+  },
+  {
+    key: "contact-messages",
+    label: "Contact Inbox",
+    to: "/super-admin/contact-messages",
+    icon: FaEnvelope,
   },
 ];
 
