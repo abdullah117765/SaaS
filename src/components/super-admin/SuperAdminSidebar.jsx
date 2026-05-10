@@ -7,8 +7,11 @@ import {
     FaChevronLeft,
     FaCog,
     FaCreditCard,
+  FaDollarSign,
     FaEnvelope,
+  FaLayerGroup,
     FaSignOutAlt,
+  FaTag,
     FaTachometerAlt,
     FaUsers,
 } from "react-icons/fa";
@@ -46,10 +49,28 @@ const navItems = [
     icon: FaChartPie,
   },
   {
-    key: "billing",
+    key: "billing-overview",
     label: "Billing",
-    to: "/super-admin/billing",
+    to: "/super-admin/billing?tab=overview",
     icon: FaCreditCard,
+  },
+  {
+    key: "billing-payments",
+    label: "Payments",
+    to: "/super-admin/billing?tab=payments",
+    icon: FaDollarSign,
+  },
+  {
+    key: "billing-subscriptions",
+    label: "Subscriptions",
+    to: "/super-admin/billing?tab=subscriptions",
+    icon: FaLayerGroup,
+  },
+  {
+    key: "billing-coupons",
+    label: "Coupons",
+    to: "/super-admin/billing?tab=coupons",
+    icon: FaTag,
   },
   {
     key: "platform-settings",
@@ -72,6 +93,7 @@ const SuperAdminSidebar = ({
 }) => {
   const { signOut, userDetails } = useAuth();
   const location = useLocation();
+  const activeSearchParams = new URLSearchParams(location.search);
 
   const variants = useMemo(
     () => (isMobile ? mobileSidebarVariants : sidebarVariants),
@@ -101,6 +123,26 @@ const SuperAdminSidebar = ({
     return `group relative flex w-full items-center rounded-xl py-3 text-sm font-semibold tracking-wide transition-colors ${alignment} ${
       isActive ? activeStyles : inactiveStyles
     }`;
+  };
+
+  const isItemActive = (item) => {
+    const [pathOnly, queryString] = item.to.split("?");
+    if (!location.pathname.startsWith(pathOnly)) {
+      return false;
+    }
+
+    if (!queryString) {
+      return true;
+    }
+
+    const expectedParams = new URLSearchParams(queryString);
+    for (const [key, value] of expectedParams.entries()) {
+      if (activeSearchParams.get(key) !== value) {
+        return false;
+      }
+    }
+
+    return true;
   };
 
   return (
@@ -150,7 +192,7 @@ const SuperAdminSidebar = ({
         <ul className="space-y-1">
           {navItems.map((item) => {
             const ItemIcon = item.icon;
-            const isActive = location.pathname.startsWith(item.to);
+            const isActive = isItemActive(item);
             const linkClassName = renderNavLinkClass(isActive);
             return (
               <li key={item.key}>
