@@ -22,6 +22,7 @@ import {
 import { HiOutlineAcademicCap } from "react-icons/hi";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { listNotifications } from "../utils/notificationsApi";
 import ChangePasswordModal from "./common/ChangePasswordModal";
 
 const Navbar = () => {
@@ -30,7 +31,31 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [profileDropdown, setProfileDropdown] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
+
+  // Poll notifications every 30s
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0);
+      return undefined;
+    }
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await listNotifications({ take: 1 });
+        if (!cancelled) setUnreadCount(res?.data?.unread ?? 0);
+      } catch {
+        /* ignore */
+      }
+    };
+    load();
+    const id = setInterval(load, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [user, location.pathname]);
 
   // Handle scroll effect
   useEffect(() => {
@@ -255,14 +280,20 @@ const Navbar = () => {
               {user ? (
                 <div className="flex items-center space-x-5">
                   {/* Notifications */}
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="relative p-2 text-gray-600 transition-colors duration-200 hover:text-primary-600"
-                  >
-                    <FaBell className="w-5 h-5" />
-                    <span className="absolute w-4 h-4 bg-red-500 border-2 border-white rounded-full -top-1 -right-1"></span>
-                  </motion.button>
+                  <Link to="/notifications" aria-label="Notifications">
+                    <motion.span
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="relative inline-flex items-center justify-center p-2 text-gray-600 transition-colors duration-200 hover:text-primary-600"
+                    >
+                      <FaBell className="w-5 h-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white border-2 border-white">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
+                    </motion.span>
+                  </Link>
 
                   {/* Profile Dropdown */}
                   <div className="relative">

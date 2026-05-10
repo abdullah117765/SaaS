@@ -33,6 +33,7 @@ const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const AcademySubscription = lazy(() => import("./pages/AcademySubscription"));
 const BillingPage = lazy(() => import("./pages/BillingPage"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const SuperAdminBillingPage = lazy(() =>
   import("./pages/super-admin/SuperAdminBillingPage").catch(() => ({
     default: () => <div className="p-8">Platform Billing - Coming Soon</div>,
@@ -521,6 +522,9 @@ const AppContent = () => {
             />
 
             {/* Catch all route - 404 page */}
+            <Route path="/notifications" element={<PrivateRoute />}>
+              <Route index element={<NotificationsPage />} />
+            </Route>
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
