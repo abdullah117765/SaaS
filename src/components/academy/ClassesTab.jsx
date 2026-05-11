@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   FaSearch,
@@ -223,7 +223,7 @@ const ClassesTab = ({
                       <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">{classItem.description}</p>
                     )}
                   </td>
-                  <td className="px-5 py-3.5 text-sm text-slate-600">{classItem.teacher || '—'}</td>
+                  <td className="px-5 py-3.5 text-sm text-slate-600">{classItem.teacher || 'Ã¢â‚¬â€'}</td>
                   <td className="px-5 py-3.5 text-sm text-slate-600">
                     <div>{classItem.schedule || new Date(classItem.date).toLocaleString()}</div>
                     {classItem.timezone && <div className="text-xs text-slate-400">{classItem.timezone}</div>}
@@ -257,48 +257,6 @@ const ClassesTab = ({
       </div>
     );
   };
-              {rows.map((classItem) => (
-                <tr key={classItem.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-semibold text-gray-900">{classItem.title}</div>
-                    {classItem.description && (
-                      <p className="mt-1 text-sm text-gray-500 line-clamp-2">{classItem.description}</p>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{classItem.teacher || 'â€”'}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    <div>{classItem.schedule || new Date(classItem.date).toLocaleString()}</div>
-                    {classItem.timezone && <div className="text-xs text-gray-400">{classItem.timezone}</div>}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{classItem.duration} mins</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{classItem.students_count ?? 0}</td>
-                  <td className="px-6 py-4 text-sm">{renderStatusBadge(classItem.status)}</td>
-                  <td className="px-6 py-4 text-center">
-                    <div className="flex justify-center space-x-2">
-                      {classItem.status !== 'ended' && classItem.zoomLink && (
-                        <button
-                          onClick={() => openZoomLink(classItem.zoomLink)}
-                          className="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-blue-500 hover:text-blue-600"
-                        >
-                          <FaExternalLinkAlt className="mr-1" /> Join
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleViewDetails(classItem)}
-                        className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
 
   const renderAttendanceInsights = () => (
     <div className="space-y-6">
@@ -310,7 +268,7 @@ const ClassesTab = ({
         <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Best Performing</p>
           <p className="mt-2 text-base font-semibold text-slate-900">
-            {attendanceMetrics.best ? attendanceMetrics.best.title : '—'}
+            {attendanceMetrics.best ? attendanceMetrics.best.title : 'Ã¢â‚¬â€'}
           </p>
           {attendanceMetrics.best && (
             <p className="text-sm text-emerald-600">{attendanceMetrics.best.rate}% attendance</p>
@@ -319,7 +277,7 @@ const ClassesTab = ({
         <div className="rounded-xl border border-amber-100 bg-amber-50 p-4 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Needs Attention</p>
           <p className="mt-2 text-base font-semibold text-slate-900">
-            {attendanceMetrics.worst ? attendanceMetrics.worst.title : '—'}
+            {attendanceMetrics.worst ? attendanceMetrics.worst.title : 'Ã¢â‚¬â€'}
           </p>
           {attendanceMetrics.worst && (
             <p className="text-sm text-amber-600">{attendanceMetrics.worst.rate}% attendance</p>
@@ -336,7 +294,6 @@ const ClassesTab = ({
                   <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Teacher</th>
                   <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Students</th>
                   <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Attendance Rate</th>
-                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-emerald-50">
@@ -345,66 +302,9 @@ const ClassesTab = ({
                   return (
                     <tr key={item.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50/30'} hover:bg-emerald-50/60 transition-colors`}>
                       <td className="px-5 py-3.5 text-sm font-semibold text-slate-900">{item.title}</td>
-                      <td className="px-5 py-3.5 text-sm text-slate-600">{item.teacher || '—'}</td>
+                      <td className="px-5 py-3.5 text-sm text-slate-600">{item.teacher || 'Ã¢â‚¬â€'}</td>
                       <td className="px-5 py-3.5 text-sm text-slate-600">{participants}</td>
                       <td className="px-5 py-3.5 text-sm font-medium text-emerald-700">{item.rate}%</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : (
-        renderEmptyState('No attendance data available yet.')
-      )}
-    </div>
-  );
-            {attendanceMetrics.best ? attendanceMetrics.best.title : 'â€”'}
-          </p>
-          {attendanceMetrics.best && (
-            <p className="text-sm text-gray-500">{attendanceMetrics.best.rate}% attendance</p>
-          )}
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-500">Needs Attention</p>
-          <p className="mt-2 text-base font-semibold text-gray-900">
-            {attendanceMetrics.worst ? attendanceMetrics.worst.title : 'â€”'}
-          </p>
-          {attendanceMetrics.worst && (
-            <p className="text-sm text-gray-500">{attendanceMetrics.worst.rate}% attendance</p>
-          )}
-        </div>
-      </div>
-      {attendanceMetrics.rates.length > 0 ? (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Class
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Teacher
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Participants
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Attendance Rate
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                {attendanceMetrics.rates.map((item) => {
-                  const participants = item.students_count ?? 0;
-                  return (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-semibold text-gray-900">{item.title}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{item.teacher || '—'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{participants}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{item.rate}%</td>
                     </tr>
                   );
                 })}
@@ -569,7 +469,7 @@ const ClassesTab = ({
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">End</p>
                   <p className="mt-1 font-medium text-slate-900">
-                    {selectedClass.endDate ? new Date(selectedClass.endDate).toLocaleString() : '—'}
+                    {selectedClass.endDate ? new Date(selectedClass.endDate).toLocaleString() : 'Ã¢â‚¬â€'}
                   </p>
                 </div>
                 <div>
@@ -605,68 +505,6 @@ const ClassesTab = ({
                 type="button"
                 onClick={closeModal}
                 className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-              <h3 className="text-xl font-semibold text-gray-900">{selectedClass.title}</h3>
-              <p className="mt-1 text-sm text-gray-500">{selectedClass.description || 'No description provided.'}</p>
-            </div>
-            <div className="space-y-4 px-6 py-4 text-sm text-gray-700">
-              <div className="flex items-center gap-2 text-gray-600">
-                <FaChalkboardTeacher className="text-blue-500" />
-                <span>Teacher:</span>
-                <span className="font-medium text-gray-900">{selectedClass.teacher || 'Unassigned'}</span>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs uppercase text-gray-500">Start</p>
-                  <p className="mt-1 font-medium text-gray-900">
-                    {new Date(selectedClass.date).toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase text-gray-500">End</p>
-                  <p className="mt-1 font-medium text-gray-900">
-                    {selectedClass.endDate ? new Date(selectedClass.endDate).toLocaleString() : 'â€”'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase text-gray-500">Duration</p>
-                  <p className="mt-1 font-medium text-gray-900">{selectedClass.duration} minutes</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase text-gray-500">Participants</p>
-                  <p className="mt-1 font-medium text-gray-900">{selectedClass.students_count ?? 0}</p>
-                </div>
-                {selectedClass.status === 'ended' && (
-                  <div>
-                    <p className="text-xs uppercase text-gray-500">Attendance</p>
-                    <p className="mt-1 font-medium text-gray-900">
-                      {selectedClass.attendance ?? 0}/{selectedClass.students_count ?? 0}
-                    </p>
-                  </div>
-                )}
-              </div>
-              {selectedClass.zoomLink && (
-                <button
-                  type="button"
-                  onClick={() => openZoomLink(selectedClass.zoomLink)}
-                  className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                >
-                  <FaExternalLinkAlt className="mr-2" />
-                  Open Zoom Meeting
-                </button>
-              )}
-            </div>
-            <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-3">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-600 hover:border-blue-500 hover:text-blue-600"
               >
                 Close
               </button>
