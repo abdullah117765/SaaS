@@ -106,16 +106,16 @@ const AdminSubscriptionsPanel = () => {
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <th className="px-3 py-2">Customer</th>
-              <th className="px-3 py-2">Plan</th>
-              <th className="px-3 py-2">
+            <tr className="bg-emerald-950">
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Customer</th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Plan</th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                 Price
                 <InfoTip content="Plan price per billing interval." />
               </th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Period end</th>
-              <th className="px-3 py-2 text-center">Actions</th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Status</th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Period end</th>
+              <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-100">Actions</th>
             </tr>
           </thead>
           <tbody>

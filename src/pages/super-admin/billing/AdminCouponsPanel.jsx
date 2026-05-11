@@ -399,19 +399,19 @@ const AdminCouponsPanel = () => {
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <th className="px-3 py-2">Code</th>
-              <th className="px-3 py-2">Name</th>
-              <th className="px-3 py-2">Discount</th>
-              <th className="px-3 py-2">Applies to</th>
-              <th className="px-3 py-2">
+            <tr className="bg-emerald-950">
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Code</th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Name</th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Discount</th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Applies to</th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                 Redemptions
                 <InfoTip content="Used / cap (or unlimited)." />
               </th>
-              <th className="px-3 py-2">Window</th>
-              <th className="px-3 py-2">Active</th>
-              <th className="px-3 py-2">Highlight</th>
-              <th className="px-3 py-2 text-center">Actions</th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Window</th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Active</th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Highlight</th>
+              <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-100">Actions</th>
             </tr>
           </thead>
           <tbody>
