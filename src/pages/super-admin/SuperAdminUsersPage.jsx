@@ -501,11 +501,6 @@ const SuperAdminUsersPage = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-emerald-100">
                     {loading ? (
                       <tr>
                         <td
