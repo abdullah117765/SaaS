@@ -120,7 +120,7 @@ const AdminPaymentsPanel = () => {
               </th>
               <th className="px-3 py-2">Net</th>
               <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Actions</th>
+              <th className="px-3 py-2 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -176,9 +176,9 @@ const AdminPaymentsPanel = () => {
                       {p.status}
                     </span>
                   </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
+                  <td className="px-3 py-2 whitespace-nowrap text-center">
                     {p.status === "completed" ? (
-                      <div className="flex gap-1">
+                      <div className="flex justify-center gap-1">
                         <button
                           type="button"
                           onClick={() => handleRefund(p, false)}

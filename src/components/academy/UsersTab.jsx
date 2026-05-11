@@ -401,6 +401,7 @@ const UsersTab = ({
                           { label: 'Phone', value: teacher.phoneNumber },
                           { label: 'Joined', value: teacher.joinDate },
                           { label: 'Classes', value: teacher.classes ?? 0 },
+                          { label: 'Resources', value: teacher.resources ?? 0 },
                         ])}
                         {renderFactRow(
                           [

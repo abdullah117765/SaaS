@@ -162,7 +162,7 @@ const SuperAdminContactMessagesPage = () => {
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Created
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Actions
                       </th>
                     </tr>
@@ -223,8 +223,8 @@ const SuperAdminContactMessagesPage = () => {
                               ? new Date(row.createdAt).toLocaleString()
                               : "—"}
                           </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                            <div className="flex justify-end gap-2">
+                          <td className="whitespace-nowrap px-6 py-4 text-center text-sm">
+                            <div className="flex justify-center gap-2">
                               {row.status !== "IN_REVIEW" ? (
                                 <button
                                   type="button"

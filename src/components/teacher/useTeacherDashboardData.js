@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
-import apiRequest from "../../utils/apiClient";
+import apiRequest, { resolveAssetUrl } from "../../utils/apiClient";
 
 const DEFAULT_FILTERS = {
   status: "all",
@@ -36,6 +36,11 @@ const normaliseClass = (record) => ({
   timezone: record.timezone ?? "UTC",
   creditsConsumed: record.creditsConsumed ?? 0,
   zoomJoinUrl: record.zoomJoinUrl ?? null,
+  zoomStartUrl: record.zoomStartUrl ?? null,
+  cancellationReason:
+    typeof record.metadata?.cancellation?.reason === "string"
+      ? record.metadata.cancellation.reason
+      : "",
 });
 
 const useTeacherDashboardData = () => {
@@ -177,6 +182,9 @@ const useTeacherDashboardData = () => {
         const approvedAcademyNames = academies
           .filter((academy) => academy.status === "APPROVED")
           .map((academy) => academy.academyName ?? "Unnamed Academy");
+        const enrolledClasses =
+          Number(student._count?.classParticipants ?? student.enrolledClasses ?? 0) || 0;
+        const profilePhotoUrl = resolveAssetUrl(student.profilePhotoUrl);
 
         return {
           id: student.id,
@@ -187,6 +195,8 @@ const useTeacherDashboardData = () => {
           status: student.status,
           joined: toLocaleDateTime(student.createdAt),
           academies: approvedAcademyNames,
+          enrolledClasses,
+          avatarUrl: profilePhotoUrl,
         };
       });
       setStudents(mappedStudents);
@@ -315,8 +325,8 @@ const useTeacherDashboardData = () => {
         });
         showToast({
           status: "success",
-          title: "Class removed",
-          description: "The class and meeting have been cancelled.",
+          title: "Class cleared",
+          description: "The class has been removed from your list.",
         });
         await load();
         return { success: true };
@@ -326,6 +336,34 @@ const useTeacherDashboardData = () => {
         showToast({
           status: "error",
           title: "Deletion failed",
+          description: message,
+        });
+        return { success: false, error: message };
+      }
+    },
+    [load, showToast],
+  );
+
+  const cancelClass = useCallback(
+    async (classId, reason) => {
+      try {
+        await apiRequest(`/classes/${classId}/cancel`, {
+          method: "POST",
+          body: { reason },
+        });
+        showToast({
+          status: "success",
+          title: "Class cancelled",
+          description: "The Zoom meeting has been cancelled.",
+        });
+        await load();
+        return { success: true };
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Unable to cancel class.";
+        showToast({
+          status: "error",
+          title: "Cancellation failed",
           description: message,
         });
         return { success: false, error: message };
@@ -352,6 +390,7 @@ const useTeacherDashboardData = () => {
     refresh: load,
     createClass,
     updateClass,
+    cancelClass,
     deleteClass,
     academyOptions,
     activeAcademyId,

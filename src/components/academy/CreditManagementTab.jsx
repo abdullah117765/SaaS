@@ -293,7 +293,7 @@ const CreditManagementTab = ({ academyId }) => {
                   <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600">Used</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600">Balance</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600">Limit</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600">Actions</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -314,8 +314,8 @@ const CreditManagementTab = ({ academyId }) => {
                           <span className="text-gray-500">Unlimited</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-right text-sm">
-                        <div className="flex justify-end gap-2">
+                      <td className="px-6 py-4 text-center text-sm">
+                        <div className="flex justify-center gap-2">
                           <button
                             onClick={() => handleOpenLimitModal(teacher)}
                             className="inline-flex items-center rounded-md border border-blue-200 px-2 py-1.5 text-xs text-blue-600 hover:bg-blue-50"

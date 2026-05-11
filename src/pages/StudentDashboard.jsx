@@ -36,6 +36,61 @@ const StudentDashboard = () => {
   } = useStudentResources(classes, teachers, activeAcademyId);
 
   const nextClass = useMemo(() => upcomingClasses[0] ?? null, [upcomingClasses]);
+  const teacherInsights = useMemo(() => {
+    const initial = new Map(
+      teachers.map((teacher) => [
+        teacher.id,
+        {
+          upcomingClasses: 0,
+          totalClasses: 0,
+          platformClasses: teacher.classCount ?? 0,
+          resources: 0,
+          platformResources: teacher.resourceCount ?? 0,
+          nextClass: null,
+        },
+      ]),
+    );
+
+    classes.forEach((cls) => {
+      const teacherId = cls.teacherId;
+      if (!teacherId || !initial.has(teacherId)) {
+        return;
+      }
+      const insight = initial.get(teacherId);
+      const isUpcoming = cls.status === 'upcoming';
+      insight.totalClasses = Math.max(insight.totalClasses, 0) + 1;
+      if (isUpcoming) {
+        insight.upcomingClasses += 1;
+        if (
+          !insight.nextClass ||
+          new Date(cls.start).getTime() < new Date(insight.nextClass.start).getTime()
+        ) {
+          insight.nextClass = cls;
+        }
+      }
+    });
+
+    resources.forEach((resource) => {
+      if (!resource.uploaderId || !initial.has(resource.uploaderId)) {
+        return;
+      }
+      const insight = initial.get(resource.uploaderId);
+      insight.resources += 1;
+    });
+
+    return initial;
+  }, [classes, resources, teachers]);
+
+  const getTeacherInitials = (teacher) => {
+    const source = teacher?.name || teacher?.email || 'TE';
+    return source
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0))
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+  };
 
   const isBusy = loading || loadingAcademies;
 
@@ -160,7 +215,7 @@ const StudentDashboard = () => {
       <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-800">Teaching Staff</h2>
-          <p className="text-sm text-gray-500">Need help? Reach out to any approved teacher.</p>
+          <p className="text-sm text-gray-500">Approved teachers connected to your academy and classes.</p>
         </div>
         <span className="hidden sm:inline-flex text-sm text-gray-500">{metrics.teacherCount} teachers</span>
       </div>
@@ -168,30 +223,88 @@ const StudentDashboard = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Teacher</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Academy</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Classes</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Resources</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {teachers.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">No teachers are available right now.</td>
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">No teachers are available right now.</td>
               </tr>
             ) : (
-              teachers.map((teacher) => (
-                <tr key={teacher.id}>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{teacher.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{teacher.email}</td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
-                      {teacher.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{teacher.joined}</td>
-                </tr>
-              ))
+              teachers.map((teacher) => {
+                const insight = teacherInsights.get(teacher.id) ?? {
+                  upcomingClasses: 0,
+                  totalClasses: 0,
+                  platformClasses: teacher.classCount ?? 0,
+                  resources: 0,
+                  platformResources: teacher.resourceCount ?? 0,
+                  nextClass: null,
+                };
+                const visibleClassCount = Math.max(
+                  insight.totalClasses,
+                  insight.platformClasses ?? 0,
+                );
+                const resourceCount = Math.max(
+                  insight.resources,
+                  insight.platformResources ?? 0,
+                );
+                return (
+                  <tr key={teacher.id}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
+                          {teacher.avatarUrl ? (
+                            <img
+                              src={teacher.avatarUrl}
+                              alt={`${teacher.name} avatar`}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            getTeacherInitials(teacher)
+                          )}
+                        </div>
+                        <div className="max-w-sm">
+                          <p className="text-sm font-medium text-gray-900">{teacher.name}</p>
+                          <p className="mt-1 text-xs text-gray-500">{teacher.email}</p>
+                          {teacher.bio ? (
+                            <p className="mt-2 line-clamp-2 text-xs text-gray-500">{teacher.bio}</p>
+                          ) : null}
+                          <p className="mt-2 text-xs text-gray-400">Joined {teacher.joined}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-700">
+                      {teacher.academies?.length ? teacher.academies.join(', ') : 'Assigned academy'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-700">
+                      <p className="font-medium text-gray-900">
+                        {visibleClassCount} visible
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {insight.upcomingClasses} upcoming
+                      </p>
+                      {insight.nextClass ? (
+                        <p className="mt-1 text-xs text-emerald-700">
+                          Next: {insight.nextClass.title}
+                        </p>
+                      ) : null}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-700">
+                      {resourceCount} available
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                        {teacher.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -212,7 +325,7 @@ const StudentDashboard = () => {
   );
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="w-full max-w-none px-4 py-8 space-y-6 sm:px-6 lg:px-8">
       <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">

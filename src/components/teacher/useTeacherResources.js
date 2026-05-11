@@ -48,6 +48,9 @@ const useTeacherResources = (classes = [], academyId = null) => {
         if (resource.visibility === "PUBLIC") {
           return true;
         }
+        if (resource.visibility === "ACADEMY") {
+          return true;
+        }
         if (resource.classId && classIds.has(resource.classId)) {
           return true;
         }
@@ -84,8 +87,14 @@ const useTeacherResources = (classes = [], academyId = null) => {
         return { success: false, error: message };
       }
       try {
-        const requestBody = { ...payload, academyId: payload.academyId ?? academyId };
-        await apiRequest("/resources", {
+        const isFileUpload = payload instanceof FormData;
+        const requestBody = isFileUpload
+          ? payload
+          : { ...payload, academyId: payload.academyId ?? academyId };
+        if (isFileUpload && !requestBody.has("academyId")) {
+          requestBody.append("academyId", academyId);
+        }
+        await apiRequest(isFileUpload ? "/resources/upload" : "/resources", {
           method: "POST",
           body: requestBody,
         });
@@ -116,8 +125,14 @@ const useTeacherResources = (classes = [], academyId = null) => {
         return { success: false, error: "No academy selected." };
       }
       try {
-        const requestBody = { ...updates, academyId: updates.academyId ?? academyId };
-        await apiRequest(`/resources/${resourceId}`, {
+        const isFileUpload = updates instanceof FormData;
+        const requestBody = isFileUpload
+          ? updates
+          : { ...updates, academyId: updates.academyId ?? academyId };
+        if (isFileUpload && !requestBody.has("academyId")) {
+          requestBody.append("academyId", academyId);
+        }
+        await apiRequest(`/resources/${resourceId}${isFileUpload ? "/upload" : ""}`, {
           method: "PATCH",
           body: requestBody,
         });

@@ -21,10 +21,6 @@ const DEFAULT_FORM = {
   type: "document",
   classId: "all",
   description: "",
-  fileUrl: "",
-  fileKey: "",
-  mimeType: "",
-  fileSize: "",
   visibility: "ACADEMY",
 };
 
@@ -59,6 +55,17 @@ const formatFileSize = (bytes) => {
   return `${value.toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
 };
 
+const inferTypeFromFile = (file) => {
+  const mimeType = file?.type?.toLowerCase?.() ?? "";
+  const name = file?.name?.toLowerCase?.() ?? "";
+  if (mimeType.includes("pdf") || name.endsWith(".pdf")) return "pdf";
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType.includes("zip") || /\.(zip|rar|7z)$/i.test(name)) return "archive";
+  if (mimeType.includes("json") || /\.(js|ts|tsx|jsx|py|java|cs|html|css)$/i.test(name)) return "code";
+  return "document";
+};
+
 const ResourcesTab = ({
   resources = [],
   classes = [],
@@ -68,6 +75,7 @@ const ResourcesTab = ({
   onDeleteResource,
   onRefreshResources,
   canManage = true,
+  audience = "academy",
 }) => {
   const canCreate = canManage && typeof onUploadResource === "function";
   const canModify = canManage && typeof onUpdateResource === "function";
@@ -77,6 +85,7 @@ const ResourcesTab = ({
   const [showFormModal, setShowFormModal] = useState(false);
   const [editingResource, setEditingResource] = useState(null);
   const [formValues, setFormValues] = useState(DEFAULT_FORM);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState(null);
   const [feedback, setFeedback] = useState(null);
@@ -106,6 +115,41 @@ const ResourcesTab = ({
   const uniqueUploaders = useMemo(
     () => Array.from(new Set(resources.map((item) => item.uploader ?? "Unknown"))),
     [resources],
+  );
+
+  const visibilityOptions = useMemo(() => {
+    if (audience === "teacher") {
+      return [
+        {
+          value: "PRIVATE",
+          label: "Selected class only",
+          helper: "Students enrolled in the linked class can access it.",
+          requiresClass: true,
+        },
+        {
+          value: "ACADEMY",
+          label: "Academy members",
+          helper: "Approved teachers and students in this academy can access it.",
+        },
+      ];
+    }
+
+    return [
+      {
+        value: "ACADEMY",
+        label: "Academy members",
+        helper: "Approved teachers and students in this academy can access it.",
+      },
+      {
+        value: "PRIVATE",
+        label: "Academy admins only",
+        helper: "Only academy admins and the uploader can access it.",
+      },
+    ];
+  }, [audience]);
+
+  const selectedVisibility = visibilityOptions.find(
+    (option) => option.value === formValues.visibility,
   );
 
   const filteredResources = useMemo(() => {
@@ -142,6 +186,7 @@ const ResourcesTab = ({
     }
     setEditingResource(null);
     setFormValues(DEFAULT_FORM);
+    setSelectedFile(null);
     setModalError(null);
     setShowFormModal(true);
   };
@@ -156,12 +201,12 @@ const ResourcesTab = ({
       type: resource.type ?? "document",
       classId: resource.classId ?? "all",
       description: resource.description ?? "",
-      fileUrl: resource.downloadUrl ?? "",
-      fileKey: resource.fileKey ?? "",
-      mimeType: resource.mimeType ?? "",
-      fileSize: resource.size ? String(resource.size) : "",
-      visibility: resource.visibility ?? "ACADEMY",
+      visibility:
+        visibilityOptions.some((option) => option.value === resource.visibility)
+          ? resource.visibility
+          : "ACADEMY",
     });
+    setSelectedFile(null);
     setModalError(null);
     setShowFormModal(true);
   };
@@ -177,21 +222,52 @@ const ResourcesTab = ({
     setFormValues((prev) => ({
       ...prev,
       [name]: value,
+      ...(name === "classId" && value === "all" && prev.visibility === "PRIVATE"
+        ? { visibility: "ACADEMY" }
+        : {}),
+    }));
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0] ?? null;
+    setSelectedFile(file);
+    if (!file) return;
+
+    setFormValues((prev) => ({
+      ...prev,
+      title: prev.title || file.name.replace(/\.[^.]+$/, ""),
+      type: inferTypeFromFile(file),
     }));
   };
 
   const buildPayload = () => {
-    const sizeValue = Number(formValues.fileSize);
+    const classId = formValues.classId === "all" ? "" : formValues.classId;
+    const visibility =
+      formValues.visibility === "PRIVATE" && formValues.classId === "all"
+        ? "ACADEMY"
+        : formValues.visibility;
+
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("title", formValues.title.trim());
+      formData.append("fileType", formValues.type);
+      formData.append("visibility", visibility);
+      if (formValues.description?.trim()) {
+        formData.append("description", formValues.description.trim());
+      }
+      if (classId) {
+        formData.append("classId", classId);
+      }
+      return formData;
+    }
+
     return {
       title: formValues.title.trim(),
       description: formValues.description?.trim() || undefined,
-      fileUrl: formValues.fileUrl.trim(),
-      fileKey: formValues.fileKey?.trim() || undefined,
-      mimeType: formValues.mimeType?.trim() || undefined,
       fileType: formValues.type,
-      fileSize: Number.isFinite(sizeValue) && sizeValue > 0 ? sizeValue : null,
-      classId: formValues.classId === "all" ? null : formValues.classId,
-      visibility: formValues.visibility,
+      classId: classId || null,
+      visibility,
     };
   };
 
@@ -206,6 +282,10 @@ const ResourcesTab = ({
     setActionError(null);
 
     try {
+      if (!editingResource && !selectedFile) {
+        setModalError("Choose a file from your computer before uploading.");
+        return;
+      }
       const payload = buildPayload();
       let result;
 
@@ -224,6 +304,7 @@ const ResourcesTab = ({
       setShowFormModal(false);
       setEditingResource(null);
       setFormValues(DEFAULT_FORM);
+      setSelectedFile(null);
 
       if (typeof onRefreshResources === "function") {
         await onRefreshResources();
@@ -283,7 +364,7 @@ const ResourcesTab = ({
               {editingResource ? "Update Resource" : "Upload New Resource"}
             </h3>
             <p className="text-sm text-gray-500">
-              Provide a download link for files you want to share with your academy.
+              Choose a file and define who should be able to access it.
             </p>
           </div>
           <form onSubmit={handleSubmit}>
@@ -310,8 +391,30 @@ const ResourcesTab = ({
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
+                  <label htmlFor="resource-file" className="block text-sm font-medium text-gray-700">
+                    File {editingResource ? "(optional replacement)" : ""}
+                  </label>
+                  <input
+                    id="resource-file"
+                    name="file"
+                    type="file"
+                    required={!editingResource}
+                    onChange={handleFileChange}
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  {selectedFile ? (
+                    <p className="mt-1 text-xs text-gray-500">
+                      {selectedFile.name} - {formatFileSize(selectedFile.size)}
+                    </p>
+                  ) : editingResource ? (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Current file remains unchanged unless you choose a replacement.
+                    </p>
+                  ) : null}
+                </div>
+                <div>
                   <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-                    Type
+                    Category
                   </label>
                   <select
                     id="type"
@@ -328,6 +431,8 @@ const ResourcesTab = ({
                     <option value="code">Code</option>
                   </select>
                 </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="classId" className="block text-sm font-medium text-gray-700">
                     Linked Class
@@ -339,7 +444,7 @@ const ResourcesTab = ({
                     onChange={handleFormChange}
                     className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
-                    <option value="all">General resource</option>
+                    <option value="all">General academy resource</option>
                     {classes.map((cls) => (
                       <option key={cls.id} value={cls.id}>
                         {cls.title}
@@ -347,71 +452,9 @@ const ResourcesTab = ({
                     ))}
                   </select>
                 </div>
-              </div>
-              <div>
-                <label htmlFor="fileUrl" className="block text-sm font-medium text-gray-700">
-                  File URL
-                </label>
-                <input
-                  id="fileUrl"
-                  name="fileUrl"
-                  type="url"
-                  required
-                  value={formValues.fileUrl}
-                  onChange={handleFormChange}
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="https://storage.example.com/path/to/resource.ext"
-                />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="fileKey" className="block text-sm font-medium text-gray-700">
-                    Storage Key
-                  </label>
-                  <input
-                    id="fileKey"
-                    name="fileKey"
-                    type="text"
-                    value={formValues.fileKey}
-                    onChange={handleFormChange}
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="uploads/resources/filename.ext"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="fileSize" className="block text-sm font-medium text-gray-700">
-                    File Size (bytes)
-                  </label>
-                  <input
-                    id="fileSize"
-                    name="fileSize"
-                    type="number"
-                    min="0"
-                    value={formValues.fileSize}
-                    onChange={handleFormChange}
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="Optional size in bytes"
-                  />
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="mimeType" className="block text-sm font-medium text-gray-700">
-                    Mime Type
-                  </label>
-                  <input
-                    id="mimeType"
-                    name="mimeType"
-                    type="text"
-                    value={formValues.mimeType}
-                    onChange={handleFormChange}
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="e.g. application/pdf"
-                  />
-                </div>
                 <div>
                   <label htmlFor="visibility" className="block text-sm font-medium text-gray-700">
-                    Visibility
+                    Share with
                   </label>
                   <select
                     id="visibility"
@@ -420,10 +463,19 @@ const ResourcesTab = ({
                     onChange={handleFormChange}
                     className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
-                    <option value="PRIVATE">Private</option>
-                    <option value="ACADEMY">Academy</option>
-                    <option value="PUBLIC">Public</option>
+                    {visibilityOptions.map((option) => (
+                      <option
+                        key={option.value}
+                        value={option.value}
+                        disabled={option.requiresClass && formValues.classId === "all"}
+                      >
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
+                  {selectedVisibility?.helper ? (
+                    <p className="mt-1 text-xs text-gray-500">{selectedVisibility.helper}</p>
+                  ) : null}
                 </div>
               </div>
               <div>

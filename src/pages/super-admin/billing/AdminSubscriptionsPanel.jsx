@@ -115,7 +115,7 @@ const AdminSubscriptionsPanel = () => {
               </th>
               <th className="px-3 py-2">Status</th>
               <th className="px-3 py-2">Period end</th>
-              <th className="px-3 py-2">Actions</th>
+              <th className="px-3 py-2 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -160,11 +160,11 @@ const AdminSubscriptionsPanel = () => {
                     ? new Date(s.currentPeriodEnd).toLocaleDateString()
                     : "—"}
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap">
+                <td className="px-3 py-2 whitespace-nowrap text-center">
                   {s.status === "ACTIVE" ||
                   s.status === "TRIALING" ||
                   s.status === "PAST_DUE" ? (
-                    <div className="flex gap-1">
+                    <div className="flex justify-center gap-1">
                       <button
                         type="button"
                         disabled={cancelingId === s.id}

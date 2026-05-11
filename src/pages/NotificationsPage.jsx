@@ -54,7 +54,7 @@ const NotificationsPage = () => {
         unreadOnly: filter === "unread",
         take: 50,
       });
-      const data = res?.data ?? {};
+      const data = res?.data ?? res ?? {};
       setItems(data.items ?? []);
       setUnread(data.unread ?? 0);
     } catch (err) {

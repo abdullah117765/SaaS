@@ -52,6 +52,9 @@ const useStudentResources = (classes = [], teachers = [], academyId = null) => {
         if (resource.visibility === "PUBLIC") {
           return true;
         }
+        if (resource.visibility === "ACADEMY") {
+          return true;
+        }
         if (resource.classId && classIds.has(resource.classId)) {
           return true;
         }

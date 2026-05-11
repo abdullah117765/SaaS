@@ -36,6 +36,7 @@ const TeacherResourcesTab = ({
         onDeleteResource={onDelete}
         onRefreshResources={onRefresh}
         canManage={canManageResources}
+        audience="teacher"
       />
     </div>
   );

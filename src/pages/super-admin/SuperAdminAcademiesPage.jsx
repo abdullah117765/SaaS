@@ -354,7 +354,7 @@ const SuperAdminAcademiesPage = () => {
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Created
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Actions
                       </th>
                     </tr>
@@ -432,8 +432,8 @@ const SuperAdminAcademiesPage = () => {
                               ? new Date(academy.createdAt).toLocaleDateString()
                               : "—"}
                           </td>
-                          <td className="px-6 py-4 text-sm">
-                            <div className="flex flex-wrap justify-end gap-2">
+                          <td className="px-6 py-4 text-center text-sm">
+                            <div className="flex flex-wrap justify-center gap-2">
                               <button
                                 type="button"
                                 className="inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:border-gray-300 hover:text-primary-600"

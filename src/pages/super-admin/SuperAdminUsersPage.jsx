@@ -40,21 +40,58 @@ const buildDisplayName = (user) => {
 
 const resolveUserContext = (user) => {
   const displayName = buildDisplayName(user);
+  const academyNames = Array.isArray(user.academies)
+    ? user.academies
+        .map((academy) => academy.academyName)
+        .filter(Boolean)
+    : [];
+  const ownerNames = Array.isArray(user.academies)
+    ? user.academies
+        .map((academy) => academy.academyOwnerName)
+        .filter(Boolean)
+    : [];
   const academyName =
     user.academy?.name ??
     user.academyName ??
     user.academyTitle ??
-    user.academies?.[0]?.academyName ??
+    (academyNames.length ? academyNames.join(", ") : null) ??
     (user.role === "ACADEMY_OWNER" ? `${displayName}'s Academy` : "Unassigned");
   const ownerName =
     user.academyOwner?.name ??
     user.ownerName ??
     user.academy?.ownerName ??
+    (ownerNames.length ? ownerNames.join(", ") : null) ??
     (user.role === "ACADEMY_OWNER" ? displayName : "Unassigned");
 
   return {
-    academyName,
-    ownerName,
+    academyName: academyName || "Unassigned",
+    ownerName: ownerName || "Unassigned",
+  };
+};
+
+const getUserActivity = (user) => {
+  const counts = user._count ?? {};
+  if (user.role === "TEACHER") {
+    return {
+      primary: `${numberFormatter.format(counts.teachingClasses ?? 0)} classes`,
+      secondary: `${numberFormatter.format(counts.resources ?? 0)} resources`,
+    };
+  }
+  if (user.role === "STUDENT") {
+    return {
+      primary: `${numberFormatter.format(counts.classParticipants ?? 0)} enrolled classes`,
+      secondary: user.isActive ? "Active account" : "Inactive account",
+    };
+  }
+  if (user.role === "ACADEMY_OWNER") {
+    return {
+      primary: user.academy?.status ?? "No academy status",
+      secondary: user.academy?.name ?? "Academy owner",
+    };
+  }
+  return {
+    primary: user.isActive ? "Active account" : "Inactive account",
+    secondary: "Administrative user",
   };
 };
 
@@ -445,7 +482,7 @@ const SuperAdminUsersPage = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        Name
+                        User
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Role
@@ -463,21 +500,18 @@ const SuperAdminUsersPage = () => {
                         </span>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        Email
+                        Contact
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        Activity
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        Phone
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Created
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        Updated
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Actions
                       </th>
                     </tr>
@@ -486,7 +520,7 @@ const SuperAdminUsersPage = () => {
                     {loading ? (
                       <tr>
                         <td
-                          colSpan={10}
+                          colSpan={9}
                           className="px-6 py-10 text-center text-sm text-gray-500"
                         >
                           Loading users...
@@ -495,7 +529,7 @@ const SuperAdminUsersPage = () => {
                     ) : filteredUsers.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={10}
+                          colSpan={9}
                           className="px-6 py-10 text-center text-sm text-gray-500"
                         >
                           No users match your current filters.
@@ -505,14 +539,18 @@ const SuperAdminUsersPage = () => {
                       filteredUsers.map((user) => {
                         const displayName = buildDisplayName(user);
                         const isSuperAdmin = user.role === "SUPER_ADMIN";
+                        const activity = getUserActivity(user);
                         return (
                           <tr key={user.id} className="hover:bg-gray-50">
-                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                            <td className="px-6 py-4 text-sm font-medium text-gray-900">
                               <TruncatedCell
                                 value={displayName}
                                 maxWidth="12rem"
                                 className="font-medium text-gray-900"
                               />
+                              <p className="mt-1 max-w-[12rem] truncate text-xs text-gray-400">
+                                {user.id}
+                              </p>
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                               {formatRole(user.role)}
@@ -529,35 +567,38 @@ const SuperAdminUsersPage = () => {
                                 maxWidth="12rem"
                               />
                             </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                            <td className="px-6 py-4 text-sm text-gray-500">
                               <TruncatedCell
                                 value={user.email}
                                 maxWidth="14rem"
                               />
+                              <p className="mt-1 text-xs text-gray-400">
+                                {user.phoneNumber ?? "No phone"}
+                              </p>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              <p className="font-medium text-gray-700">
+                                {activity.primary}
+                              </p>
+                              <p className="mt-1 text-xs text-gray-400">
+                                {activity.secondary}
+                              </p>
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm">
                               {renderStatus(user.status)}
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                              {user.phoneNumber ?? "N/A"}
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                               {user.createdAt
                                 ? new Date(user.createdAt).toLocaleDateString()
                                 : "N/A"}
                             </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                              {user.updatedAt
-                                ? new Date(user.updatedAt).toLocaleDateString()
-                                : "N/A"}
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                            <td className="whitespace-nowrap px-6 py-4 text-center text-sm text-gray-500">
                               {isSuperAdmin ? (
                                 <span className="text-xs uppercase tracking-wide text-gray-400">
                                   Protected
                                 </span>
                               ) : (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center justify-center gap-2">
                                   {user.status === "PENDING" && (
                                     <>
                                       <button

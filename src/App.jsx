@@ -508,7 +508,6 @@ const AppContent = () => {
               }
             />
 
-            {/* Role-aware billing - same component, role gating inside */}
             <Route
               path="/academy/billing"
               element={
@@ -526,12 +525,16 @@ const AppContent = () => {
               }
             />
             <Route
-              path="/student/billing"
+              path="/teacher/subscription"
               element={
-                <RoleBasedRoute requiredRole="student">
+                <RoleBasedRoute requiredRole="teacher">
                   <BillingPage />
                 </RoleBasedRoute>
               }
+            />
+            <Route
+              path="/student/billing"
+              element={<Navigate to="/student/dashboard" replace />}
             />
 
             {/* Catch all route - 404 page */}

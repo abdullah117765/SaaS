@@ -50,7 +50,6 @@ const TeacherDashboard = () => {
     startTime: new Date().toISOString().slice(11, 16),
     duration: 60,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC",
-    creditsConsumed: "",
   });
   const [bulkClassSubmitting, setBulkClassSubmitting] = useState(false);
   const {
@@ -71,6 +70,7 @@ const TeacherDashboard = () => {
     refresh,
     createClass,
     updateClass,
+    cancelClass,
     deleteClass,
     academyOptions,
     activeAcademyId,
@@ -141,6 +141,17 @@ const TeacherDashboard = () => {
     const fallback = user?.email ?? "You";
     return fallback.slice(0, 2).toUpperCase();
   }, [user?.email, user?.firstName, user?.lastName]);
+
+  const getStudentInitials = (student) => {
+    const source = student?.name || student?.email || "ST";
+    return source
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0))
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  };
 
   const isBusy = loading || loadingAcademies;
 
@@ -357,13 +368,13 @@ const TeacherDashboard = () => {
                 />
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                Email
+                Student
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                 Academies
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Class activity
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                 Status
@@ -408,17 +419,42 @@ const TeacherDashboard = () => {
                     />
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-gray-900">
-                      {student.name}
-                    </p>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-700">
-                    {student.email}
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
+                        {student.avatarUrl ? (
+                          <img
+                            src={student.avatarUrl}
+                            alt={`${student.name} avatar`}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          getStudentInitials(student)
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {student.name}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500">
+                          {student.email || "Email hidden"}
+                        </p>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-700">
                     {student.academies?.length
                       ? student.academies.join(", ")
                       : "-"}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    <div className="space-y-1">
+                      <p className="font-medium text-gray-900">
+                        {student.enrolledClasses ?? 0} enrolled
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Eligible for bulk scheduling
+                      </p>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span
@@ -454,7 +490,7 @@ const TeacherDashboard = () => {
   );
 
   return (
-    <div className="container mx-auto space-y-6 px-4 py-8">
+    <div className="w-full max-w-none space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <motion.div
         className="space-y-4"
         initial={{ opacity: 0, y: -12 }}
@@ -553,6 +589,7 @@ const TeacherDashboard = () => {
                 onUpdateFilters={updateFilters}
                 onCreateClass={createClass}
                 onUpdateClass={updateClass}
+                onCancelClass={cancelClass}
                 onDeleteClass={deleteClass}
                 loading={loading}
                 meta={classesMeta}
@@ -631,9 +668,6 @@ const TeacherDashboard = () => {
                     scheduledStart: start.toISOString(),
                     scheduledEnd: end.toISOString(),
                     timezone: bulkClassForm.timezone,
-                    creditsConsumed: bulkClassForm.creditsConsumed
-                      ? Number(bulkClassForm.creditsConsumed)
-                      : undefined,
                     participants: selectedStudents.map((id) => ({
                       userId: id,
                     })),
@@ -652,7 +686,6 @@ const TeacherDashboard = () => {
                       timezone:
                         Intl.DateTimeFormat().resolvedOptions().timeZone ??
                         "UTC",
-                      creditsConsumed: "",
                     });
                   }
                 } finally {
@@ -776,24 +809,6 @@ const TeacherDashboard = () => {
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Credits to deduct
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={bulkClassForm.creditsConsumed}
-                    onChange={(e) =>
-                      setBulkClassForm((prev) => ({
-                        ...prev,
-                        creditsConsumed: e.target.value,
-                      }))
-                    }
-                    placeholder="Optional"
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  />
                 </div>
               </div>
               <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">

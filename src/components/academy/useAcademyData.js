@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
 import apiRequest, { resolveAssetUrl } from "../../utils/apiClient";
+import { listNotifications } from "../../utils/notificationsApi";
 import { mapResourceRecord } from "../../utils/resourceTransforms";
 
 const EMPTY_SUBSCRIPTION_USAGE = {
@@ -140,6 +141,17 @@ const mapPaymentRecord = (payment) => ({
   provider: payment.provider ?? "Unknown",
   reference: payment.reference ?? "",
   createdAt: payment.createdAt ?? new Date().toISOString(),
+});
+
+const mapNotificationRecord = (notification) => ({
+  id: notification.id,
+  title: notification.title ?? "Notification",
+  message: notification.body ?? "",
+  time: notification.createdAt ? new Date(notification.createdAt).toLocaleString() : "",
+  read: Boolean(notification.readAt),
+  type: notification.type ?? "GENERIC",
+  actionLink: notification.data?.actionLink,
+  actionText: notification.data?.actionText,
 });
 
 const useAcademyData = () => {
@@ -283,6 +295,22 @@ const useAcademyData = () => {
     }
   }, []);
 
+  const loadNotifications = useCallback(async () => {
+    try {
+      const response = await listNotifications({ take: 50 });
+      const payload = response?.data ?? response ?? {};
+      const mapped = Array.isArray(payload.items)
+        ? payload.items.map(mapNotificationRecord)
+        : [];
+      setNotifications(mapped);
+      setUnreadNotifications(payload.unread ?? mapped.filter((item) => !item.read).length);
+    } catch (error) {
+      console.error("Failed to load notifications", error);
+      setNotifications([]);
+      setUnreadNotifications(0);
+    }
+  }, []);
+
   const loadResources = useCallback(async () => {
     setResourcesLoading(true);
     try {
@@ -357,6 +385,8 @@ const useAcademyData = () => {
             role === "TEACHER"
               ? user._count?.teachingClasses ?? 0
               : user._count?.classParticipants ?? 0,
+          resources:
+            role === "TEACHER" ? user._count?.resources ?? 0 : undefined,
           enrolledClasses:
             role === "STUDENT" ? user._count?.classParticipants ?? 0 : undefined,
           phoneNumber: user.phoneNumber ?? "",
@@ -441,9 +471,21 @@ const useAcademyData = () => {
 
     try {
       const nowIso = new Date().toISOString();
-      const overview = await apiRequest("/dashboard/overview");
+      const [overview, ownerAcademy] = await Promise.all([
+        apiRequest("/dashboard/overview"),
+        apiRequest("/academies/owner").catch(() => null),
+      ]);
 
       if (overview) {
+        const resolvedAcademyId =
+          overview.academy?.id ?? ownerAcademy?.id ?? "";
+        const resolvedAcademyName =
+          overview.academy?.name ?? ownerAcademy?.name ?? academyName;
+        const resolvedCreatedAt =
+          overview.academy?.createdAt ?? ownerAcademy?.createdAt ?? nowIso;
+        const resolvedUpdatedAt =
+          overview.academy?.updatedAt ?? ownerAcademy?.updatedAt ?? nowIso;
+
         const overviewTransactions = Array.isArray(
           overview.zoomCredits?.recentTransactions,
         )
@@ -459,16 +501,13 @@ const useAcademyData = () => {
           : [];
 
         setAcademyData({
-          id: overview.academy?.id ?? userId,
-          name: overview.academy?.name ?? academyName,
-          createdAt:
-            overview.academy?.createdAt ??
-            overview.academy?.updatedAt ??
-            nowIso,
+          id: resolvedAcademyId,
+          name: resolvedAcademyName,
+          createdAt: resolvedCreatedAt,
           subscription: {
             plan: overview.subscription?.plan ?? "Professional",
-            startDate: overview.academy?.createdAt ?? nowIso,
-            endDate: overview.academy?.updatedAt ?? nowIso,
+            startDate: resolvedCreatedAt,
+            endDate: resolvedUpdatedAt,
             status: "active",
           },
         });
@@ -509,7 +548,7 @@ const useAcademyData = () => {
 
       await fetchClasses({ page: 1 });
       await loadUserCollections();
-      await Promise.all([loadResources(), loadPayments()]);
+      await Promise.all([loadResources(), loadPayments(), loadNotifications()]);
 
       const [zoomSummary, transactionsResponse] = await Promise.all([
         apiRequest(`/zoom-credits/${userId}/summary`).catch(() => null),
@@ -560,6 +599,7 @@ const useAcademyData = () => {
     academyName,
     fetchClasses,
     loadPayments,
+    loadNotifications,
     loadResources,
     loadUserCollections,
     mapTransactionRecord,
@@ -743,9 +783,16 @@ const useAcademyData = () => {
   const uploadResource = useCallback(
     async (payload) => {
       try {
-        await apiRequest("/resources", {
+        const isFileUpload = payload instanceof FormData;
+        const requestBody = isFileUpload
+          ? payload
+          : { ...payload, academyId: payload.academyId ?? academyData?.id ?? null };
+        if (isFileUpload && !requestBody.has("academyId")) {
+          requestBody.append("academyId", academyData?.id ?? "");
+        }
+        await apiRequest(isFileUpload ? "/resources/upload" : "/resources", {
           method: "POST",
-          body: { ...payload, academyId: payload.academyId ?? academyData?.id ?? null },
+          body: requestBody,
         });
         await loadResources();
         showToast({
@@ -771,9 +818,16 @@ const useAcademyData = () => {
   const updateResource = useCallback(
     async (resourceId, updates) => {
       try {
-        await apiRequest(`/resources/${resourceId}`, {
+        const isFileUpload = updates instanceof FormData;
+        const requestBody = isFileUpload
+          ? updates
+          : { ...updates, academyId: updates.academyId ?? academyData?.id ?? null };
+        if (isFileUpload && !requestBody.has("academyId")) {
+          requestBody.append("academyId", academyData?.id ?? "");
+        }
+        await apiRequest(`/resources/${resourceId}${isFileUpload ? "/upload" : ""}`, {
           method: "PATCH",
-          body: { ...updates, academyId: updates.academyId ?? academyData?.id ?? null },
+          body: requestBody,
         });
         await loadResources();
         showToast({

@@ -24,7 +24,7 @@ const TeacherCreditUsageChart = ({ days = 14 }) => {
     fetchTrend(days)
       .then((res) => {
         if (cancelled) return;
-        setSeries(res?.data?.series ?? []);
+        setSeries(res?.series ?? res?.data?.series ?? []);
       })
       .catch((err) => !cancelled && setError(err?.message ?? "Failed to load"))
       .finally(() => !cancelled && setLoading(false));

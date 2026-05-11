@@ -223,7 +223,7 @@ const ClassesTab = ({
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -245,8 +245,8 @@ const ClassesTab = ({
                   <td className="px-6 py-4 text-sm text-gray-600">{classItem.duration} mins</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{classItem.students_count ?? 0}</td>
                   <td className="px-6 py-4 text-sm">{renderStatusBadge(classItem.status)}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-end space-x-2">
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex justify-center space-x-2">
                       {classItem.status !== 'ended' && classItem.zoomLink && (
                         <button
                           onClick={() => openZoomLink(classItem.zoomLink)}

@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import {
+    FaBan,
     FaClock,
     FaEdit,
+    FaExternalLinkAlt,
     FaPlus,
     FaSearch,
     FaSyncAlt,
@@ -31,7 +33,6 @@ const DEFAULT_FORM = {
   startTime: "",
   duration: 60,
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC",
-  creditsConsumed: "",
   status: "UPCOMING",
   participants: [],
 };
@@ -52,6 +53,7 @@ const TeacherClassesTab = ({
   onUpdateFilters,
   onCreateClass,
   onUpdateClass,
+  onCancelClass,
   onDeleteClass,
   loading,
   meta,
@@ -68,6 +70,10 @@ const TeacherClassesTab = ({
   const [formValues, setFormValues] = useState(DEFAULT_FORM);
   const [editingClass, setEditingClass] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelError, setCancelError] = useState("");
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
 
   const canSchedule = hasAcademyAccess && !loadingAcademies;
 
@@ -124,7 +130,6 @@ const TeacherClassesTab = ({
         cls.timezone ??
         Intl.DateTimeFormat().resolvedOptions().timeZone ??
         "UTC",
-      creditsConsumed: cls.creditsConsumed ?? "",
       status: (cls.status ?? "upcoming").toUpperCase(),
       participants: [],
     });
@@ -136,6 +141,19 @@ const TeacherClassesTab = ({
     setShowFormModal(false);
     setEditingClass(null);
     setFormValues(DEFAULT_FORM);
+  };
+
+  const openCancelModal = (cls) => {
+    setCancelTarget(cls);
+    setCancelReason("");
+    setCancelError("");
+  };
+
+  const closeCancelModal = () => {
+    if (cancelSubmitting) return;
+    setCancelTarget(null);
+    setCancelReason("");
+    setCancelError("");
   };
 
   const handleFormChange = (event) => {
@@ -160,8 +178,7 @@ const TeacherClassesTab = ({
     if (!formValues.title.trim()) {
       return;
     }
-    const { date, startTime, duration, timezone, creditsConsumed, status } =
-      formValues;
+    const { date, startTime, duration, timezone, status } = formValues;
     const start = new Date(`${date}T${startTime || "00:00"}:00`);
     if (Number.isNaN(start.getTime())) {
       return;
@@ -173,7 +190,6 @@ const TeacherClassesTab = ({
       scheduledStart: start.toISOString(),
       scheduledEnd: end.toISOString(),
       timezone,
-      creditsConsumed: creditsConsumed ? Number(creditsConsumed) : undefined,
       participants: formValues.participants.map((id) => ({ userId: id })),
     };
 
@@ -197,12 +213,31 @@ const TeacherClassesTab = ({
     }
   };
 
-  const handleDelete = async (cls) => {
-    const confirmed = window.confirm(`Cancel the class "${cls.title}"?`);
+  const handleClear = async (cls) => {
+    const confirmed = window.confirm(`Clear the class "${cls.title}"?`);
     if (!confirmed) {
       return;
     }
     await onDeleteClass(cls.id);
+  };
+
+  const handleCancelSubmit = async (event) => {
+    event.preventDefault();
+    const reason = cancelReason.trim();
+    if (reason.length < 3) {
+      setCancelError("A cancellation reason of at least 3 characters is required.");
+      return;
+    }
+
+    setCancelSubmitting(true);
+    setCancelError("");
+    const result = await onCancelClass(cancelTarget.id, reason);
+    setCancelSubmitting(false);
+    if (result?.success) {
+      closeCancelModal();
+    } else if (result?.error) {
+      setCancelError(result.error);
+    }
   };
 
   const filterSummary = useMemo(
@@ -387,56 +422,96 @@ const TeacherClassesTab = ({
                   <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                     Participants
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
-                {classes.map((cls) => (
-                  <tr key={cls.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <p className="font-semibold">{cls.title}</p>
-                      <p className="text-xs text-gray-500">
-                        {cls.description || "No description"}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                          STATUS_BADGES[cls.status] ??
-                          "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {cls.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">
-                      {formatDate(cls.scheduledStart)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">
-                      {cls.participants}
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-700">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(cls)}
-                          className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:border-emerald-400 hover:text-emerald-600"
+                {classes.map((cls) => {
+                  const meetingUrl = cls.zoomStartUrl ?? cls.zoomJoinUrl;
+                  const hasEndedByTime = cls.scheduledEnd
+                    ? new Date(cls.scheduledEnd).getTime() <= Date.now()
+                    : false;
+                  const canJoin =
+                    meetingUrl &&
+                    !hasEndedByTime &&
+                    !["ended", "cancelled"].includes(cls.status ?? "");
+                  const canClear =
+                    hasEndedByTime ||
+                    ["ended", "cancelled"].includes(cls.status ?? "");
+
+                  return (
+                    <tr key={cls.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        <p className="font-semibold">{cls.title}</p>
+                        <p className="text-xs text-gray-500">
+                          {cls.description || "No description"}
+                        </p>
+                        {cls.cancellationReason ? (
+                          <p className="mt-1 text-xs text-red-600">
+                            Reason: {cls.cancellationReason}
+                          </p>
+                        ) : null}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <span
+                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                            STATUS_BADGES[cls.status] ??
+                            "bg-gray-100 text-gray-700"
+                          }`}
                         >
-                          <FaEdit className="mr-1" /> Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(cls)}
-                          className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
-                        >
-                          <FaTrash className="mr-1" /> Cancel
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {cls.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {formatDate(cls.scheduledStart)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {cls.participants}
+                      </td>
+                      <td className="px-6 py-4 text-center text-sm text-gray-700">
+                        <div className="flex justify-center gap-2">
+                          {canJoin ? (
+                            <a
+                              href={meetingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                            >
+                              <FaExternalLinkAlt className="mr-1" />{" "}
+                              {cls.zoomStartUrl ? "Start" : "Join"}
+                            </a>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(cls)}
+                            className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:border-emerald-400 hover:text-emerald-600"
+                          >
+                            <FaEdit className="mr-1" /> Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              canClear ? handleClear(cls) : openCancelModal(cls)
+                            }
+                            className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
+                          >
+                            {canClear ? (
+                              <>
+                                <FaTrash className="mr-1" /> Clear
+                              </>
+                            ) : (
+                              <>
+                                <FaBan className="mr-1" /> Cancel
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -542,22 +617,8 @@ const TeacherClassesTab = ({
                     />
                   </div>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Credits to deduct
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      name="creditsConsumed"
-                      value={formValues.creditsConsumed}
-                      onChange={handleFormChange}
-                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                      placeholder="Optional"
-                    />
-                  </div>
-                  {editingClass ? (
+                {editingClass ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Status
@@ -569,7 +630,9 @@ const TeacherClassesTab = ({
                         className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                       >
                         {STATUS_OPTIONS.filter(
-                          (option) => option.value !== "all",
+                          (option) =>
+                            option.value !== "all" &&
+                            option.value !== "cancelled",
                         ).map((option) => (
                           <option
                             key={option.value}
@@ -580,8 +643,8 @@ const TeacherClassesTab = ({
                         ))}
                       </select>
                     </div>
-                  ) : null}
-                </div>
+                  </div>
+                ) : null}
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-medium text-gray-700">
@@ -671,6 +734,64 @@ const TeacherClassesTab = ({
                     : editingClass
                       ? "Update class"
                       : "Create class"}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      ) : null}
+
+      {cancelTarget ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="w-full max-w-lg rounded-2xl bg-white shadow-2xl"
+          >
+            <form onSubmit={handleCancelSubmit}>
+              <div className="border-b border-gray-200 px-6 py-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Cancel class
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {cancelTarget.title}
+                </p>
+              </div>
+              <div className="space-y-3 px-6 py-5">
+                <label className="block text-sm font-medium text-gray-700">
+                  Cancellation reason
+                </label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(event) => setCancelReason(event.target.value)}
+                  rows={4}
+                  required
+                  minLength={3}
+                  maxLength={500}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+                {cancelError ? (
+                  <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {cancelError}
+                  </div>
+                ) : null}
+              </div>
+              <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={closeCancelModal}
+                  disabled={cancelSubmitting}
+                  className="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  disabled={cancelSubmitting}
+                  className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-400"
+                >
+                  {cancelSubmitting ? "Cancelling..." : "Cancel class"}
                 </button>
               </div>
             </form>

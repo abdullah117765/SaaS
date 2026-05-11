@@ -1,5 +1,5 @@
 ﻿import { useAuth } from '../../contexts/AuthContext';
-import apiRequest from '../../utils/apiClient';
+import apiRequest, { resolveAssetUrl } from '../../utils/apiClient';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const mapClass = (cls) => ({
@@ -9,6 +9,7 @@ const mapClass = (cls) => ({
   status: cls.status?.toLowerCase() ?? 'upcoming',
   start: cls.scheduledStart,
   end: cls.scheduledEnd,
+  teacherId: cls.teacher?.id ?? null,
   teacher: cls.teacher ? `${cls.teacher.firstName ?? ''} ${cls.teacher.lastName ?? ''}`.trim() || cls.teacher.email : 'Unassigned',
   timezone: cls.timezone,
   joinUrl: cls.zoomJoinUrl,
@@ -81,6 +82,15 @@ const useStudentDashboardData = () => {
         id: teacher.id,
         name: `${teacher.firstName ?? ''} ${teacher.lastName ?? ''}`.trim() || teacher.email,
         email: teacher.email,
+        bio: teacher.bio ?? '',
+        avatarUrl: resolveAssetUrl(teacher.profilePhotoUrl),
+        academies: Array.isArray(teacher.academies)
+          ? teacher.academies
+              .filter((academy) => academy.status === 'APPROVED')
+              .map((academy) => academy.academyName ?? 'Unnamed Academy')
+          : [],
+        classCount: Number(teacher._count?.teachingClasses ?? 0) || 0,
+        resourceCount: Number(teacher._count?.resources ?? 0) || 0,
         joined: formatDate(teacher.createdAt),
         status: teacher.status,
       }));

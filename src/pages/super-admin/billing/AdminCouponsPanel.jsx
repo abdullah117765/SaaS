@@ -411,7 +411,7 @@ const AdminCouponsPanel = () => {
               <th className="px-3 py-2">Window</th>
               <th className="px-3 py-2">Active</th>
               <th className="px-3 py-2">Highlight</th>
-              <th className="px-3 py-2">Actions</th>
+              <th className="px-3 py-2 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -439,7 +439,7 @@ const AdminCouponsPanel = () => {
                     ? new Date(c.expiresAt).toLocaleDateString()
                     : "no end"}
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-2 text-center">
                   <button
                     type="button"
                     onClick={() => toggleActive(c)}

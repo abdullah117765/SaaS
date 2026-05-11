@@ -1,4 +1,5 @@
-import React, { useId, useState } from "react";
+import React, { useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * Lightweight, dependency-free tooltip. Pure CSS + React state so it works
@@ -11,39 +12,78 @@ import React, { useId, useState } from "react";
  */
 const Tooltip = ({ content, children, side = "top", className = "" }) => {
   const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const triggerRef = useRef(null);
   const id = useId();
 
   if (!content) return children;
 
-  const positionClasses =
-    {
-      top: "bottom-full left-1/2 -translate-x-1/2 mb-2",
-      bottom: "top-full left-1/2 -translate-x-1/2 mt-2",
-      left: "right-full top-1/2 -translate-y-1/2 mr-2",
-      right: "left-full top-1/2 -translate-y-1/2 ml-2",
-    }[side] ?? "bottom-full left-1/2 -translate-x-1/2 mb-2";
+  const updatePosition = () => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const gap = 8;
+    const nextPosition =
+      {
+        top: {
+          top: rect.top - gap,
+          left: rect.left + rect.width / 2,
+          transform: "translate(-50%, -100%)",
+        },
+        bottom: {
+          top: rect.bottom + gap,
+          left: rect.left + rect.width / 2,
+          transform: "translate(-50%, 0)",
+        },
+        left: {
+          top: rect.top + rect.height / 2,
+          left: rect.left - gap,
+          transform: "translate(-100%, -50%)",
+        },
+        right: {
+          top: rect.top + rect.height / 2,
+          left: rect.right + gap,
+          transform: "translate(0, -50%)",
+        },
+      }[side] ?? {
+        top: rect.top - gap,
+        left: rect.left + rect.width / 2,
+        transform: "translate(-50%, -100%)",
+      };
+
+    setPosition(nextPosition);
+  };
+
+  const openTooltip = () => {
+    updatePosition();
+    setOpen(true);
+  };
 
   return (
     <span
-      className={`relative inline-flex ${className}`}
-      onMouseEnter={() => setOpen(true)}
+      ref={triggerRef}
+      className={`inline-flex ${className}`}
+      onMouseEnter={openTooltip}
       onMouseLeave={() => setOpen(false)}
-      onFocus={() => setOpen(true)}
+      onFocus={openTooltip}
       onBlur={() => setOpen(false)}
     >
       {React.cloneElement(React.Children.only(children), {
         "aria-describedby": open ? id : undefined,
       })}
-      {open ? (
-        <span
-          id={id}
-          role="tooltip"
-          className={`pointer-events-none absolute z-50 whitespace-pre-line rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg ${positionClasses}`}
-          style={{ maxWidth: "16rem" }}
-        >
-          {content}
-        </span>
-      ) : null}
+      {open && typeof document !== "undefined"
+        ? createPortal(
+            <span
+              id={id}
+              role="tooltip"
+              className="pointer-events-none fixed z-[9999] whitespace-pre-line rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg"
+              style={{ ...position, maxWidth: "16rem" }}
+            >
+              {content}
+            </span>,
+            document.body,
+          )
+        : null}
     </span>
   );
 };

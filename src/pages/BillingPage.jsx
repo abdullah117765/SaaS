@@ -59,8 +59,11 @@ const BillingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const role = userRole ?? user?.role;
-  const canPurchase = role === "academy_owner" || role === "super_admin";
-  const canSubscribe = role === "academy_owner" || role === "super_admin";
+  const canTransact = role === "academy_owner" || role === "super_admin";
+  const canManageSubscription =
+    role === "academy_owner" || role === "super_admin";
+  const canViewCatalog =
+    role === "academy_owner" || role === "super_admin" || role === "teacher";
 
   const [overview, setOverview] = useState(null);
   const [packages, setPackages] = useState([]);
@@ -99,9 +102,9 @@ const BillingPage = () => {
     try {
       const [me, pkgs, sub, mkt] = await Promise.all([
         getMyBilling(),
-        canPurchase ? getPackages() : Promise.resolve([]),
-        canSubscribe ? getPlans() : Promise.resolve([]),
-        canPurchase
+        canViewCatalog ? getPackages() : Promise.resolve([]),
+        canViewCatalog ? getPlans() : Promise.resolve([]),
+        canViewCatalog
           ? listMarketingCoupons().catch(() => [])
           : Promise.resolve([]),
       ]);
@@ -256,7 +259,7 @@ const BillingPage = () => {
             Manage your credits, subscription and payment history.
           </p>
         </div>
-        {canPurchase ? (
+        {canTransact ? (
           <button
             type="button"
             onClick={handlePortal}
@@ -316,7 +319,7 @@ const BillingPage = () => {
               {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
             </p>
           ) : null}
-          {subscription && canSubscribe ? (
+          {subscription && canManageSubscription ? (
             <button
               type="button"
               onClick={handleCancel}
@@ -329,7 +332,7 @@ const BillingPage = () => {
         </div>
       </div>
 
-      {canPurchase &&
+      {canViewCatalog &&
       (marketingCoupons.length > 0 ||
         packages.length > 0 ||
         plans.length > 0) ? (
@@ -384,7 +387,7 @@ const BillingPage = () => {
         </Section>
       ) : null}
 
-      {canPurchase && packages.length > 0 ? (
+      {canViewCatalog && packages.length > 0 ? (
         <Section
           title="Buy credits"
           info="A platform fee is included in the price shown. You will be redirected to Stripe Checkout."
@@ -421,10 +424,10 @@ const BillingPage = () => {
                   <button
                     type="button"
                     onClick={() => handleBuyPackage(pkg.id)}
-                    disabled={busy}
+                    disabled={busy || !canTransact}
                     className="mt-4 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-emerald-700 disabled:opacity-50"
                   >
-                    Buy now
+                    {canTransact ? "Buy now" : "Only academy owners can buy"}
                   </button>
                 </div>
               );
@@ -433,7 +436,7 @@ const BillingPage = () => {
         </Section>
       ) : null}
 
-      {canSubscribe && plans.length > 0 ? (
+      {canViewCatalog && plans.length > 0 ? (
         <Section
           title="Subscription plans"
           info="Subscriptions renew automatically. Cancel any time."
@@ -458,27 +461,26 @@ const BillingPage = () => {
                 </p>
                 <ul className="mt-3 space-y-1 text-xs text-slate-600">
                   <li>
-                    {plan.monthlyClassMinutes?.toLocaleString() ?? 0} minutes /
-                    period
-                  </li>
-                  <li>
                     {plan.monthlyCredits?.toLocaleString() ?? 0} credits /
                     period
                   </li>
-                  {plan.maxTeachers ? (
-                    <li>Up to {plan.maxTeachers} teachers</li>
-                  ) : null}
-                  {plan.maxStudents ? (
-                    <li>Up to {plan.maxStudents} students</li>
-                  ) : null}
+                  <li>Unlimited teachers</li>
+                  <li>Unlimited students</li>
                 </ul>
                 <button
                   type="button"
                   onClick={() => handleSubscribe(plan.id)}
-                  disabled={busy || plan.priceCents === 0}
+                  disabled={
+                    busy ||
+                    plan.priceCents === 0 ||
+                    !canTransact ||
+                    subscription?.planId === plan.id
+                  }
                   className="mt-4 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white shadow transition hover:bg-slate-800 disabled:opacity-50"
                 >
-                  {plan.priceCents === 0
+                  {!canTransact
+                    ? "Only academy owners can subscribe"
+                    : plan.priceCents === 0
                     ? "Free tier"
                     : subscription?.planId === plan.id
                       ? "Current plan"
