@@ -151,16 +151,29 @@ const AppContent = () => {
     "/student",
     "/super-admin",
   ];
+  const authPrefixes = [
+    "/login",
+    "/register",
+    "/verify-email",
+    "/academy/login",
+  ];
   const isDashboardRoute = dashboardPrefixes.some((prefix) =>
     location.pathname.startsWith(prefix),
   );
-  const containerPadding = isDashboardRoute ? "pt-24" : "pt-20";
+  const isAuthRoute = authPrefixes.some((prefix) =>
+    location.pathname.startsWith(prefix),
+  );
+  // Routes that have a full-height sidebar — Navbar is embedded inside those layouts
+  const hasFullSidebar =
+    location.pathname.startsWith("/academy/dashboard") ||
+    location.pathname.startsWith("/super-admin/");
+  const containerPadding = isAuthRoute || hasFullSidebar ? "" : "pt-20";
 
   return (
     <div
-      className={`min-h-screen flex flex-col ${isDashboardRoute ? "bg-[#f5fbf7]" : "bg-gray-50"}`}
+      className={`min-h-screen flex flex-col ${isDashboardRoute || isAuthRoute ? "bg-white" : "bg-gray-50"}`}
     >
-      <Navbar />
+      {!isAuthRoute && !hasFullSidebar ? <Navbar /> : null}
       <Suspense fallback={<LoadingSpinner />}>
         <div className={`flex-grow ${containerPadding}`}>
           {" "}
@@ -352,6 +365,29 @@ const AppContent = () => {
               }
             />
             <Route
+              path="/academy/login"
+              element={
+                user && !loading ? (
+                  <Navigate
+                    to={
+                      userRole === "super_admin"
+                        ? "/super-admin/dashboard"
+                        : userRole === "academy_owner"
+                          ? "/academy/dashboard"
+                          : userRole === "teacher"
+                            ? "/teacher/dashboard"
+                            : userRole === "student"
+                              ? "/student/dashboard"
+                              : "/dashboard"
+                    }
+                    replace
+                  />
+                ) : (
+                  <LoginPage />
+                )
+              }
+            />
+            <Route
               path="/register"
               element={
                 user && !loading ? (
@@ -518,19 +554,11 @@ const AppContent = () => {
             />
             <Route
               path="/teacher/billing"
-              element={
-                <RoleBasedRoute requiredRole="teacher">
-                  <BillingPage />
-                </RoleBasedRoute>
-              }
+              element={<Navigate to="/teacher/dashboard" replace />}
             />
             <Route
               path="/teacher/subscription"
-              element={
-                <RoleBasedRoute requiredRole="teacher">
-                  <BillingPage />
-                </RoleBasedRoute>
-              }
+              element={<Navigate to="/teacher/dashboard" replace />}
             />
             <Route
               path="/student/billing"
@@ -545,7 +573,7 @@ const AppContent = () => {
           </Routes>
         </div>
       </Suspense>
-      {isDashboardRoute ? <DashboardFooter /> : <Footer />}
+      {isAuthRoute ? null : isDashboardRoute ? <DashboardFooter /> : <Footer />}
     </div>
   );
 };

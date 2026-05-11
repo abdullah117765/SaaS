@@ -52,7 +52,7 @@ const Sidebar = ({
     return sidebarCollapsed ? "mini" : "open";
   };
 
-  const containerClass = `fixed left-0 top-20 bottom-0 z-40 flex flex-col overflow-hidden bg-gradient-to-b from-emerald-700 via-emerald-800 to-emerald-900 text-emerald-50 shadow-[0_22px_48px_rgba(6,95,70,0.32)] transition-all duration-300`;
+  const containerClass = `fixed left-0 top-0 bottom-0 z-40 flex flex-col overflow-hidden bg-gradient-to-b from-emerald-700 via-emerald-800 to-emerald-900 text-emerald-50 shadow-[0_22px_48px_rgba(6,95,70,0.32)] transition-all duration-300`;
 
   return (
     <motion.aside

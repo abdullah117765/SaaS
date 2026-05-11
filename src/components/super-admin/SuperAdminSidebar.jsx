@@ -51,7 +51,7 @@ const navItems = [
   {
     key: "billing-overview",
     label: "Billing",
-    to: "/super-admin/billing?tab=overview",
+    to: "/super-admin/billing?tab=payments",
     icon: FaCreditCard,
   },
   {
