@@ -46,4 +46,3 @@ const CreditsTab = ({ zoomCredits, onPurchaseCredits, academyId }) => {
 };
 
 export default CreditsTab;
-export default CreditsTab;
