@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    /* Bump base font from 16 px → 17 px so all rem-based text scales up */
+    font-size: 17px;
+  }
+}
