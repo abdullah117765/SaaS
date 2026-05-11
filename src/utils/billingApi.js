@@ -91,7 +91,14 @@ export const cancelAdminSubscription = (id, immediate = false) => {
 };
 
 // ---- Coupons ----
-export const listAdminCoupons = () => apiRequest("/billing/admin/coupons");
+export const listAdminCoupons = (params = {}) => {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== "") qs.set(k, v);
+  });
+  const s = qs.toString();
+  return apiRequest(`/billing/admin/coupons${s ? `?${s}` : ""}`);
+};
 
 export const createCoupon = (payload) =>
   apiRequest("/billing/admin/coupons", { method: "POST", body: payload });

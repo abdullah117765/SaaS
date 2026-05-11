@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import InfoTip from "../../../components/common/InfoTip";
+import Pagination from "../../../components/common/Pagination";
 import TruncatedCell from "../../../components/common/TruncatedCell";
 import { useToast } from "../../../contexts/ToastContext";
+import useDebouncedValue from "../../../hooks/useDebouncedValue";
 import {
     formatMoneyDecimal,
     listAdminPayments,
@@ -9,10 +11,13 @@ import {
 } from "../../../utils/billingApi";
 
 const STATUSES = ["", "completed", "refunded", "partially_refunded", "failed"];
+const PROVIDERS = ["", "stripe", "manual"];
 
 const AdminPaymentsPanel = () => {
   const { showToast } = useToast();
-  const [filters, setFilters] = useState({ page: 1, limit: 20, status: "" });
+  const [searchInput, setSearchInput] = useState("");
+  const [filters, setFilters] = useState({ page: 1, limit: 20, status: "", provider: "", from: "", to: "" });
+  const debouncedSearch = useDebouncedValue(searchInput, 400);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [refundingId, setRefundingId] = useState(null);
@@ -20,7 +25,7 @@ const AdminPaymentsPanel = () => {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await listAdminPayments(filters);
+      const res = await listAdminPayments({ ...filters, search: debouncedSearch || undefined });
       setData(res);
     } catch (err) {
       showToast({
@@ -34,9 +39,13 @@ const AdminPaymentsPanel = () => {
   };
 
   useEffect(() => {
+    setFilters((f) => ({ ...f, page: 1 }));
+  }, [debouncedSearch]);
+
+  useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.page, filters.limit, filters.status]);
+  }, [filters.page, filters.limit, filters.status, filters.provider, filters.from, filters.to, debouncedSearch]);
 
   const handleRefund = async (payment, partial = false) => {
     let amountCents;
@@ -77,29 +86,55 @@ const AdminPaymentsPanel = () => {
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="text"
+          placeholder="Search email or reference…"
+          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+        />
         <label className="text-sm text-slate-600">
           Status
           <select
             className="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
             value={filters.status}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))
-            }
+            onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))}
           >
             {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s || "All"}
-              </option>
+              <option key={s} value={s}>{s || "All"}</option>
             ))}
           </select>
         </label>
-        <button
-          type="button"
-          onClick={load}
-          className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-50"
-        >
-          Refresh
-        </button>
+        <label className="text-sm text-slate-600">
+          Provider
+          <select
+            className="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+            value={filters.provider}
+            onChange={(e) => setFilters((f) => ({ ...f, provider: e.target.value, page: 1 }))}
+          >
+            {PROVIDERS.map((p) => (
+              <option key={p} value={p}>{p || "All"}</option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm text-slate-600">
+          From
+          <input
+            type="date"
+            className="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+            value={filters.from}
+            onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value, page: 1 }))}
+          />
+        </label>
+        <label className="text-sm text-slate-600">
+          To
+          <input
+            type="date"
+            className="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+            value={filters.to}
+            onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value, page: 1 }))}
+          />
+        </label>
         <span className="ml-auto text-xs text-slate-500">
           {data ? `${data.total} payments` : ""}
         </span>
@@ -233,35 +268,15 @@ const AdminPaymentsPanel = () => {
         </table>
       </div>
 
-      {data && data.totalPages > 1 ? (
-        <div className="flex items-center justify-end gap-2 text-sm">
-          <button
-            type="button"
-            disabled={filters.page <= 1}
-            onClick={() =>
-              setFilters((f) => ({ ...f, page: Math.max(1, f.page - 1) }))
-            }
-            className="rounded-md border border-slate-300 bg-white px-3 py-1 disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <span className="text-slate-600">
-            Page {data.page} of {data.totalPages}
-          </span>
-          <button
-            type="button"
-            disabled={filters.page >= data.totalPages}
-            onClick={() =>
-              setFilters((f) => ({
-                ...f,
-                page: Math.min(data.totalPages, f.page + 1),
-              }))
-            }
-            className="rounded-md border border-slate-300 bg-white px-3 py-1 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
+      {data && data.totalPages >= 1 ? (
+        <Pagination
+          page={filters.page}
+          totalPages={data.totalPages}
+          totalItems={data.total}
+          pageSize={filters.limit}
+          onPageChange={(p) => setFilters((f) => ({ ...f, page: p }))}
+          onPageSizeChange={(s) => setFilters((f) => ({ ...f, limit: s, page: 1 }))}
+        />
       ) : null}
     </section>
   );

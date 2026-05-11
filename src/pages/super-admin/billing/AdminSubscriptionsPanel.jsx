@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import InfoTip from "../../../components/common/InfoTip";
+import Pagination from "../../../components/common/Pagination";
 import TruncatedCell from "../../../components/common/TruncatedCell";
 import { useToast } from "../../../contexts/ToastContext";
+import useDebouncedValue from "../../../hooks/useDebouncedValue";
 import {
     cancelAdminSubscription,
     formatMoney,
@@ -21,7 +23,9 @@ const STATUSES = [
 
 const AdminSubscriptionsPanel = () => {
   const { showToast } = useToast();
+  const [searchInput, setSearchInput] = useState("");
   const [filters, setFilters] = useState({ page: 1, limit: 20, status: "" });
+  const debouncedSearch = useDebouncedValue(searchInput, 400);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [cancelingId, setCancelingId] = useState(null);
@@ -29,7 +33,7 @@ const AdminSubscriptionsPanel = () => {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await listAdminSubscriptions(filters);
+      const res = await listAdminSubscriptions({ ...filters, search: debouncedSearch || undefined });
       setData(res);
     } catch (err) {
       showToast({
@@ -43,9 +47,13 @@ const AdminSubscriptionsPanel = () => {
   };
 
   useEffect(() => {
+    setFilters((f) => ({ ...f, page: 1 }));
+  }, [debouncedSearch]);
+
+  useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.page, filters.limit, filters.status]);
+  }, [filters.page, filters.limit, filters.status, debouncedSearch]);
 
   const handleCancel = async (sub, immediate) => {
     if (
@@ -75,6 +83,13 @@ const AdminSubscriptionsPanel = () => {
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="text"
+          placeholder="Search by email or name…"
+          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+        />
         <label className="text-sm text-slate-600">
           Status
           <select
@@ -91,13 +106,6 @@ const AdminSubscriptionsPanel = () => {
             ))}
           </select>
         </label>
-        <button
-          type="button"
-          onClick={load}
-          className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-50"
-        >
-          Refresh
-        </button>
         <span className="ml-auto text-xs text-slate-500">
           {data ? `${data.total} subscriptions` : ""}
         </span>
@@ -211,6 +219,17 @@ const AdminSubscriptionsPanel = () => {
           </tbody>
         </table>
       </div>
+
+      {data && data.totalPages >= 1 ? (
+        <Pagination
+          page={filters.page}
+          totalPages={data.totalPages}
+          totalItems={data.total}
+          pageSize={filters.limit}
+          onPageChange={(p) => setFilters((f) => ({ ...f, page: p }))}
+          onPageSizeChange={(s) => setFilters((f) => ({ ...f, limit: s, page: 1 }))}
+        />
+      ) : null}
     </section>
   );
 };

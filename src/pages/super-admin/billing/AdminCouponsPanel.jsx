@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import InfoTip from "../../../components/common/InfoTip";
+import Pagination from "../../../components/common/Pagination";
 import { useToast } from "../../../contexts/ToastContext";
+import useDebouncedValue from "../../../hooks/useDebouncedValue";
 import {
     createCoupon,
     deleteCoupon,
@@ -31,17 +33,27 @@ const blank = {
 
 const AdminCouponsPanel = () => {
   const { showToast } = useToast();
-  const [coupons, setCoupons] = useState([]);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(blank);
   const [submitting, setSubmitting] = useState(false);
+  const [filters, setFilters] = useState({ page: 1, limit: 25, search: "", appliesTo: "", active: "" });
 
-  const load = async () => {
+  const debouncedSearch = useDebouncedValue(filters.search, 400);
+
+  const load = async (overrideFilters) => {
     setLoading(true);
+    const f = overrideFilters ?? filters;
     try {
-      const res = await listAdminCoupons();
-      setCoupons(res);
+      const res = await listAdminCoupons({
+        page: f.page,
+        limit: f.limit,
+        search: debouncedSearch || undefined,
+        appliesTo: f.appliesTo || undefined,
+        active: f.active !== "" ? f.active : undefined,
+      });
+      setData(res);
     } catch (err) {
       showToast({
         status: "error",
@@ -54,8 +66,15 @@ const AdminCouponsPanel = () => {
   };
 
   useEffect(() => {
+    setFilters((f) => ({ ...f, page: 1 }));
+  }, [debouncedSearch, filters.appliesTo, filters.active]);
+
+  useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.page, filters.limit, debouncedSearch, filters.appliesTo, filters.active]);
+
+  const coupons = data?.items ?? [];
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -157,11 +176,42 @@ const AdminCouponsPanel = () => {
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-600">
-          Manage promotional codes synced with Stripe. Highlighted coupons
-          appear on the academy marketing banner.
-        </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="text"
+          placeholder="Search code or name…"
+          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          value={filters.search}
+          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))}
+        />
+        <label className="text-sm text-slate-600">
+          Applies to
+          <select
+            className="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+            value={filters.appliesTo}
+            onChange={(e) => setFilters((f) => ({ ...f, appliesTo: e.target.value, page: 1 }))}
+          >
+            <option value="">All</option>
+            <option value="ALL">All products</option>
+            <option value="PACKAGES">Packages</option>
+            <option value="PLANS">Plans</option>
+          </select>
+        </label>
+        <label className="text-sm text-slate-600">
+          Status
+          <select
+            className="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+            value={filters.active}
+            onChange={(e) => setFilters((f) => ({ ...f, active: e.target.value, page: 1 }))}
+          >
+            <option value="">All</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </label>
+        <span className="ml-auto text-xs text-slate-500">
+          {data ? `${data.total} coupons` : ""}
+        </span>
         <button
           type="button"
           onClick={() => setShowForm((s) => !s)}
@@ -497,6 +547,17 @@ const AdminCouponsPanel = () => {
           </tbody>
         </table>
       </div>
+
+      {data && data.totalPages > 1 ? (
+        <Pagination
+          page={filters.page}
+          totalPages={data.totalPages}
+          totalItems={data.total}
+          pageSize={filters.limit}
+          onPageChange={(p) => setFilters((f) => ({ ...f, page: p }))}
+          onPageSizeChange={(s) => setFilters((f) => ({ ...f, limit: s, page: 1 }))}
+        />
+      ) : null}
     </section>
   );
 };
