@@ -1,197 +1,260 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  FaSearch, 
-  FaFilter, 
-  FaDownload, 
-  FaCreditCard, 
-  FaMoneyBillWave, 
-  FaFileInvoice,
-  FaCalendarAlt
-} from 'react-icons/fa';
+import { motion } from "framer-motion";
+import { useMemo, useState } from "react";
+import { FaSearch } from "react-icons/fa";
+
+const STATUS_CLASSES = {
+  completed: "bg-emerald-100 text-emerald-800",
+  pending: "bg-amber-100 text-amber-800",
+  failed: "bg-rose-100 text-rose-800",
+  refunded: "bg-slate-200 text-slate-700",
+  partially_refunded: "bg-sky-100 text-sky-800",
+};
+
+const ITEMS_PER_PAGE = 10;
+
+const formatMoney = (amount, currency = "USD") => {
+  const num = Number(amount ?? 0);
+  if (!Number.isFinite(num)) return "-";
+
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+    }).format(num);
+  } catch {
+    return `${num.toFixed(2)} ${currency}`;
+  }
+};
 
 const PaymentsTab = ({ payments = [], loading = false }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [providerFilter, setProviderFilter] = useState("all");
+  const [page, setPage] = useState(1);
 
-  // Filter payments based on search term and filters
-  const filteredPayments = payments.filter(payment => {
-    const matchesSearch = 
-      payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.student.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesDate = dateFilter === 'all' || payment.date.includes(dateFilter);
-    const matchesType = typeFilter === 'all' || payment.type === typeFilter;
-    const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
-    
-    return matchesSearch && matchesDate && matchesType && matchesStatus;
-  });
+  const statusOptions = useMemo(() => {
+    const set = new Set(payments.map((p) => p.status).filter(Boolean));
+    return ["all", ...Array.from(set)];
+  }, [payments]);
 
-  // Get unique values for filters
-  const uniqueTypes = [...new Set(payments.map(p => p.type))];
-  const uniqueStatuses = [...new Set(payments.map(p => p.status))];
+  const providerOptions = useMemo(() => {
+    const set = new Set(payments.map((p) => p.provider).filter(Boolean));
+    return ["all", ...Array.from(set)];
+  }, [payments]);
 
-  // Calculate totals
-  const totalAmount = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
-  const paidAmount = filteredPayments
-    .filter(p => p.status === 'paid')
-    .reduce((sum, payment) => sum + payment.amount, 0);
-  const pendingAmount = filteredPayments
-    .filter(p => p.status === 'pending')
-    .reduce((sum, payment) => sum + payment.amount, 0);
+  const filteredPayments = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return payments.filter((payment) => {
+      const matchesSearch =
+        !term ||
+        (payment.id ?? "").toLowerCase().includes(term) ||
+        (payment.reference ?? "").toLowerCase().includes(term) ||
+        (payment.provider ?? "").toLowerCase().includes(term);
 
-  const handleDownloadInvoice = (invoiceId) => {
-    // In a real app, this would trigger a download
-    console.log(`Downloading invoice ${invoiceId}`);
+      const matchesStatus =
+        statusFilter === "all" || payment.status === statusFilter;
+      const matchesProvider =
+        providerFilter === "all" || payment.provider === providerFilter;
+
+      return matchesSearch && matchesStatus && matchesProvider;
+    });
+  }, [payments, providerFilter, search, statusFilter]);
+
+  const totals = useMemo(() => {
+    const gross = filteredPayments.reduce(
+      (sum, payment) => sum + Number(payment.amount ?? 0),
+      0,
+    );
+
+    return {
+      count: filteredPayments.length,
+      gross,
+      paidCount: filteredPayments.filter((p) => p.status === "completed")
+        .length,
+    };
+  }, [filteredPayments]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredPayments.length / ITEMS_PER_PAGE),
+  );
+  const clampedPage = Math.min(page, totalPages);
+
+  const pageItems = useMemo(() => {
+    const start = (clampedPage - 1) * ITEMS_PER_PAGE;
+    return filteredPayments.slice(start, start + ITEMS_PER_PAGE);
+  }, [clampedPage, filteredPayments]);
+
+  const goToPage = (nextPage) => {
+    setPage(Math.max(1, Math.min(totalPages, nextPage)));
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
+      transition={{ duration: 0.35 }}
+      className="space-y-5"
     >
-      {/* Payment Summary */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Payment Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-            <h4 className="text-lg font-medium text-gray-900 mb-2">Total Amount</h4>
-            <div className="text-3xl font-bold text-blue-600">${totalAmount.toFixed(2)}</div>
-            <p className="text-sm text-gray-500 mt-1">All transactions</p>
+      <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm">
+        <div className="grid gap-4 md:grid-cols-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+              Total filtered
+            </p>
+            <p className="mt-1 text-2xl font-semibold text-emerald-900">
+              {totals.count}
+            </p>
           </div>
-          <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-            <h4 className="text-lg font-medium text-gray-900 mb-2">Paid</h4>
-            <div className="text-3xl font-bold text-green-600">${paidAmount.toFixed(2)}</div>
-            <p className="text-sm text-gray-500 mt-1">Completed payments</p>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+              Completed payments
+            </p>
+            <p className="mt-1 text-2xl font-semibold text-emerald-900">
+              {totals.paidCount}
+            </p>
           </div>
-          <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-100">
-            <h4 className="text-lg font-medium text-gray-900 mb-2">Pending</h4>
-            <div className="text-3xl font-bold text-yellow-600">${pendingAmount.toFixed(2)}</div>
-            <p className="text-sm text-gray-500 mt-1">Awaiting payment</p>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+              Gross amount
+            </p>
+            <p className="mt-1 text-2xl font-semibold text-emerald-900">
+              {formatMoney(totals.gross)}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Search and filters */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 mb-6">
-          <h3 className="text-lg font-medium text-gray-900">Payment History</h3>
-          <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaSearch className="text-gray-400" />
-              </div>
-              <input
-                type="text"
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="Search payments..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex space-x-2">
-              <select
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-              >
-                <option value="all">All Types</option>
-                {uniqueTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-              <select
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">All Statuses</option>
-                {uniqueStatuses.map(status => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-            </div>
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mb-4 grid gap-3 md:grid-cols-4">
+          <div className="relative md:col-span-2">
+            <FaSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Search by payment id, reference, provider"
+              className="w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            />
           </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-emerald-500 focus:outline-none"
+          >
+            {statusOptions.map((status) => (
+              <option key={status} value={status}>
+                {status === "all" ? "All statuses" : status}
+              </option>
+            ))}
+          </select>
+          <select
+            value={providerFilter}
+            onChange={(e) => {
+              setProviderFilter(e.target.value);
+              setPage(1);
+            }}
+            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-emerald-500 focus:outline-none"
+          >
+            {providerOptions.map((provider) => (
+              <option key={provider} value={provider}>
+                {provider === "all" ? "All providers" : provider}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Payments table */}
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="py-10 text-center text-sm text-gray-500">Loading payments...</div>
-          ) : filteredPayments.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No payments found</p>
-            </div>
-          ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+        <div className="overflow-x-auto rounded-lg border border-slate-200">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 bg-emerald-950 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
+                <th className="px-3 py-2">Date</th>
+                <th className="px-3 py-2">Provider</th>
+                <th className="px-3 py-2">Reference</th>
+                <th className="px-3 py-2">Amount</th>
+                <th className="px-3 py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ID/Description
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Student
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <td
+                    colSpan={5}
+                    className="px-3 py-8 text-center text-slate-500"
+                  >
+                    Loading payments...
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredPayments.map((payment) => (
-                  <tr key={payment.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{payment.id}</div>
-                      <div className="text-sm text-gray-500">{payment.description}</div>
+              ) : pageItems.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-3 py-8 text-center text-slate-500"
+                  >
+                    No payments found for the selected filters.
+                  </td>
+                </tr>
+              ) : (
+                pageItems.map((payment, idx) => (
+                  <tr
+                    key={payment.id}
+                    className={`border-b border-slate-100 text-slate-700 hover:bg-emerald-50/50 ${idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50/30'}`}
+                  >
+                    <td className="px-3 py-2 text-xs">
+                      {new Date(payment.createdAt).toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <FaCalendarAlt className="mr-1 text-gray-400" />
-                        {payment.date}
-                      </div>
+                    <td className="px-3 py-2">{payment.provider ?? "-"}</td>
+                    <td className="px-3 py-2 font-mono text-xs">
+                      {payment.reference ?? "-"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{payment.student}</div>
+                    <td className="px-3 py-2">
+                      {formatMoney(payment.amount, payment.currency)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ${payment.amount.toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        payment.status === 'paid' ? 'bg-green-100 text-green-800' :
-                        payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {payment.status}
+                    <td className="px-3 py-2">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                          STATUS_CLASSES[payment.status] ??
+                          "bg-slate-200 text-slate-700"
+                        }`}
+                      >
+                        {payment.status ?? "unknown"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                      <button
-                        onClick={() => handleDownloadInvoice(payment.id)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        <FaDownload />
-                      </button>
-                    </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-xs text-slate-500">
+            Page {clampedPage} of {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => goToPage(clampedPage - 1)}
+              disabled={clampedPage <= 1}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              onClick={() => goToPage(clampedPage + 1)}
+              disabled={clampedPage >= totalPages}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>
