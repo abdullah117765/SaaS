@@ -200,35 +200,77 @@ const ClassesTab = ({
     }
 
     return (
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <table className="min-w-full">
+            <thead>
+              <tr className="bg-emerald-950">
+                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
                   Class
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
                   Teacher
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
                   Schedule
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
                   Duration
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Participants
+                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
+                  Students
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
                   Status
                 </th>
-                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-5 py-3 text-center text-xs font-semibold text-emerald-100 uppercase tracking-wide">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className="divide-y divide-emerald-50">
+              {rows.map((classItem, idx) => (
+                <tr key={classItem.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50/30'} hover:bg-emerald-50/60 transition-colors`}>
+                  <td className="px-5 py-3.5">
+                    <div className="text-sm font-semibold text-slate-900">{classItem.title}</div>
+                    {classItem.description && (
+                      <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">{classItem.description}</p>
+                    )}
+                  </td>
+                  <td className="px-5 py-3.5 text-sm text-slate-600">{classItem.teacher || '—'}</td>
+                  <td className="px-5 py-3.5 text-sm text-slate-600">
+                    <div>{classItem.schedule || new Date(classItem.date).toLocaleString()}</div>
+                    {classItem.timezone && <div className="text-xs text-slate-400">{classItem.timezone}</div>}
+                  </td>
+                  <td className="px-5 py-3.5 text-sm text-slate-600 whitespace-nowrap">{classItem.duration} min</td>
+                  <td className="px-5 py-3.5 text-sm text-slate-600">{classItem.students_count ?? 0}</td>
+                  <td className="px-5 py-3.5">{renderStatusBadge(classItem.status)}</td>
+                  <td className="px-5 py-3.5 text-center">
+                    <div className="flex justify-center gap-2">
+                      {classItem.status !== 'ended' && classItem.zoomLink && (
+                        <button
+                          onClick={() => openZoomLink(classItem.zoomLink)}
+                          className="inline-flex items-center rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50 transition-colors"
+                        >
+                          <FaExternalLinkAlt className="mr-1 h-3 w-3" /> Join
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleViewDetails(classItem)}
+                        className="inline-flex items-center rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-800 transition-colors"
+                      >
+                        Details
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
               {rows.map((classItem) => (
                 <tr key={classItem.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
@@ -275,13 +317,70 @@ const ClassesTab = ({
   const renderAttendanceInsights = () => (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-500">Average Attendance</p>
-          <p className="mt-2 text-3xl font-semibold text-gray-900">{attendanceMetrics.averageRate}%</p>
+        <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Average Attendance</p>
+          <p className="mt-2 text-3xl font-bold text-blue-700">{attendanceMetrics.averageRate}%</p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-500">Best Performing Class</p>
-          <p className="mt-2 text-base font-semibold text-gray-900">
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Best Performing</p>
+          <p className="mt-2 text-base font-semibold text-slate-900">
+            {attendanceMetrics.best ? attendanceMetrics.best.title : '—'}
+          </p>
+          {attendanceMetrics.best && (
+            <p className="text-sm text-emerald-600">{attendanceMetrics.best.rate}% attendance</p>
+          )}
+        </div>
+        <div className="rounded-xl border border-amber-100 bg-amber-50 p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Needs Attention</p>
+          <p className="mt-2 text-base font-semibold text-slate-900">
+            {attendanceMetrics.worst ? attendanceMetrics.worst.title : '—'}
+          </p>
+          {attendanceMetrics.worst && (
+            <p className="text-sm text-amber-600">{attendanceMetrics.worst.rate}% attendance</p>
+          )}
+        </div>
+      </div>
+      {attendanceMetrics.rates.length > 0 ? (
+        <div className="overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="bg-emerald-950">
+                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
+                    Class
+                  </th>
+                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
+                    Teacher
+                  </th>
+                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
+                    Students
+                  </th>
+                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
+                    Attendance Rate
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-emerald-50">
+                {attendanceMetrics.rates.map((item, idx) => {
+                  const participants = item.students_count ?? 0;
+                  return (
+                    <tr key={item.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50/30'} hover:bg-emerald-50/60 transition-colors`}>
+                      <td className="px-5 py-3.5 text-sm font-semibold text-slate-900">{item.title}</td>
+                      <td className="px-5 py-3.5 text-sm text-slate-600">{item.teacher || '—'}</td>
+                      <td className="px-5 py-3.5 text-sm text-slate-600">{participants}</td>
+                      <td className="px-5 py-3.5 text-sm font-medium text-emerald-700">{item.rate}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        renderEmptyState('No attendance data available yet.')
+      )}
+    </div>
+  );
             {attendanceMetrics.best ? attendanceMetrics.best.title : 'â€”'}
           </p>
           {attendanceMetrics.best && (
@@ -358,11 +457,12 @@ const ClassesTab = ({
         {statusCards.map((card) => (
           <div
             key={card.key}
-            className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+            className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-4 shadow-sm cursor-pointer hover:border-emerald-200 transition-colors"
+            onClick={() => handleTabChange(card.key === 'ended' ? 'past' : card.key === 'cancelled' ? 'past' : card.key)}
           >
             <div>
-              <p className="text-sm text-gray-500">{card.label}</p>
-              <p className="mt-2 text-2xl font-semibold text-gray-900">{card.value}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{card.label}</p>
+              <p className="mt-1.5 text-2xl font-bold text-slate-900">{card.value}</p>
             </div>
             <div className={`rounded-full p-3 ${card.accent}`}>
               <card.Icon className="h-5 w-5" />
@@ -371,16 +471,16 @@ const ClassesTab = ({
         ))}
       </div>
 
-      <div className="border-b border-gray-200">
+      <div className="border-b border-emerald-100">
         <nav className="-mb-px flex space-x-6">
           {['upcoming', 'ongoing', 'past', 'attendance'].map((tab) => (
             <button
               key={tab}
               onClick={() => handleTabChange(tab)}
-              className={`whitespace-nowrap border-b-2 py-3 text-sm font-medium ${
+              className={`whitespace-nowrap border-b-2 py-3 text-sm font-semibold transition-colors ${
                 activeSubTab === tab
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  ? 'border-emerald-600 text-emerald-700'
+                  : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
               }`}
             >
               {tab === 'past' ? 'Completed' : tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -391,20 +491,20 @@ const ClassesTab = ({
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="relative w-full md:w-72">
-          <FaSearch className="pointer-events-none absolute inset-y-0 left-3 my-auto h-4 w-4 text-gray-400" />
+          <FaSearch className="pointer-events-none absolute inset-y-0 left-3 my-auto h-4 w-4 text-slate-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="Search classes or teachers..."
-            className="w-full rounded-md border border-gray-300 py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           />
         </div>
         <div className="flex items-center gap-3">
           <select
             value={teacherFilter}
             onChange={handleTeacherFilterChange}
-            className="rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="rounded-lg border border-slate-300 bg-white py-2 pl-3 pr-10 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           >
             <option value="all">All Teachers</option>
             {teacherOptions.map((option) => (
@@ -416,7 +516,7 @@ const ClassesTab = ({
           <button
             type="button"
             onClick={() => onChangeFilters && onChangeFilters({})}
-            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:border-blue-500 hover:text-blue-600"
+            className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:border-emerald-500 hover:text-emerald-700 transition-colors"
           >
             Refresh
           </button>
@@ -443,10 +543,10 @@ const ClassesTab = ({
               type="button"
               disabled={!meta.previousPage || loading}
               onClick={() => handlePageChange(meta.previousPage)}
-              className={`inline-flex items-center rounded-md border px-3 py-1.5 ${
+              className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm ${
                 meta.previousPage && !loading
-                  ? 'border-gray-300 bg-white text-gray-600 hover:border-blue-500 hover:text-blue-600'
-                  : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
+                  ? 'border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50'
+                  : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
               }`}
             >
               Previous
@@ -455,10 +555,10 @@ const ClassesTab = ({
               type="button"
               disabled={!meta.nextPage || loading}
               onClick={() => handlePageChange(meta.nextPage)}
-              className={`inline-flex items-center rounded-md border px-3 py-1.5 ${
+              className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm ${
                 meta.nextPage && !loading
-                  ? 'border-gray-300 bg-white text-gray-600 hover:border-blue-500 hover:text-blue-600'
-                  : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
+                  ? 'border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50'
+                  : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
               }`}
             >
               Next
@@ -468,9 +568,71 @@ const ClassesTab = ({
       )}
 
       {showClassModal && selectedClass && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 px-4">
-          <div className="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
-            <div className="border-b border-gray-200 px-6 py-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
+          <div className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
+            <div className="bg-emerald-950 px-6 py-4">
+              <h3 className="text-xl font-semibold text-white">{selectedClass.title}</h3>
+              <p className="mt-1 text-sm text-emerald-200">{selectedClass.description || 'No description provided.'}</p>
+            </div>
+            <div className="space-y-4 px-6 py-5 text-sm text-slate-700">
+              <div className="flex items-center gap-2 text-slate-600">
+                <FaChalkboardTeacher className="text-emerald-600" />
+                <span>Teacher:</span>
+                <span className="font-semibold text-slate-900">{selectedClass.teacher || 'Unassigned'}</span>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Start</p>
+                  <p className="mt-1 font-medium text-slate-900">
+                    {new Date(selectedClass.date).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">End</p>
+                  <p className="mt-1 font-medium text-slate-900">
+                    {selectedClass.endDate ? new Date(selectedClass.endDate).toLocaleString() : '—'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Duration</p>
+                  <p className="mt-1 font-medium text-slate-900">{selectedClass.duration} minutes</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Students</p>
+                  <p className="mt-1 font-medium text-slate-900">{selectedClass.students_count ?? 0}</p>
+                </div>
+                {selectedClass.status === 'ended' && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Attendance</p>
+                    <p className="mt-1 font-medium text-slate-900">
+                      {selectedClass.attendance ?? 0}/{selectedClass.students_count ?? 0}
+                    </p>
+                  </div>
+                )}
+              </div>
+              {selectedClass.zoomLink && (
+                <button
+                  type="button"
+                  onClick={() => openZoomLink(selectedClass.zoomLink)}
+                  className="inline-flex items-center rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 transition-colors"
+                >
+                  <FaExternalLinkAlt className="mr-2" />
+                  Open Zoom Meeting
+                </button>
+              )}
+            </div>
+            <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-3">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
               <h3 className="text-xl font-semibold text-gray-900">{selectedClass.title}</h3>
               <p className="mt-1 text-sm text-gray-500">{selectedClass.description || 'No description provided.'}</p>
             </div>
