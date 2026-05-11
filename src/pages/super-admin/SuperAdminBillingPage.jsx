@@ -46,7 +46,7 @@ const StatCard = ({ label, value, info, accent = "emerald" }) => {
   );
 };
 
-const validTabs = new Set(["overview", "payments", "subscriptions", "coupons"]);
+const validTabs = new Set(["payments", "subscriptions", "coupons"]);
 
 const getTransactionStatusClass = (status) => {
   const normalized = (status ?? "").toLowerCase();
@@ -69,8 +69,8 @@ const getTransactionStatusClass = (status) => {
 
 const SuperAdminBillingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const incomingTab = searchParams.get("tab") ?? "overview";
-  const tab = validTabs.has(incomingTab) ? incomingTab : "overview";
+  const incomingTab = searchParams.get("tab") ?? "payments";
+  const tab = validTabs.has(incomingTab) ? incomingTab : "payments";
 
   const [analyticsData, setAnalyticsData] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
@@ -244,7 +244,6 @@ const SuperAdminBillingPage = () => {
 
         <nav className="flex flex-wrap gap-2 border-b border-slate-200">
           {[
-            { id: "overview", label: "Overview" },
             { id: "payments", label: "Payments" },
             { id: "subscriptions", label: "Subscriptions" },
             { id: "coupons", label: "Coupons" },
@@ -299,19 +298,6 @@ const SuperAdminBillingPage = () => {
             </div>
           </div>
         </section>
-
-        {tab === "overview" ? (
-          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-base font-semibold text-slate-900">
-              Billing workspace
-            </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Use the sidebar Billing sections to open Payments, Subscriptions,
-              and Coupons directly. Subscription analytics and graphs are shown
-              in the Subscriptions section.
-            </p>
-          </section>
-        ) : null}
 
         {tab === "payments" ? <AdminPaymentsPanel /> : null}
 
@@ -441,7 +427,7 @@ const SuperAdminBillingPage = () => {
                           />
                           <Bar
                             dataKey="fee"
-                            fill="#14b8a6"
+                            fill="#f59e0b"
                             radius={[4, 4, 0, 0]}
                           />
                         </BarChart>
@@ -472,7 +458,7 @@ const SuperAdminBillingPage = () => {
                           <Legend />
                           <Bar
                             dataKey="gross"
-                            fill="#059669"
+                            fill="#6366f1"
                             radius={[4, 4, 0, 0]}
                           />
                         </BarChart>
