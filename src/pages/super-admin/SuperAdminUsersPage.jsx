@@ -41,14 +41,10 @@ const buildDisplayName = (user) => {
 const resolveUserContext = (user) => {
   const displayName = buildDisplayName(user);
   const academyNames = Array.isArray(user.academies)
-    ? user.academies
-        .map((academy) => academy.academyName)
-        .filter(Boolean)
+    ? user.academies.map((academy) => academy.academyName).filter(Boolean)
     : [];
   const ownerNames = Array.isArray(user.academies)
-    ? user.academies
-        .map((academy) => academy.academyOwnerName)
-        .filter(Boolean)
+    ? user.academies.map((academy) => academy.academyOwnerName).filter(Boolean)
     : [];
   const academyName =
     user.academy?.name ??
@@ -370,24 +366,24 @@ const SuperAdminUsersPage = () => {
           </p>
         </div>
 
-        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-lg border border-gray-100 bg-white px-5 py-4 shadow-sm">
+        <div className="mb-6 grid grid-cols-5 gap-3">
+          <div className="rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm">
             <p className="text-xs uppercase tracking-wide text-gray-500">
               Total users
             </p>
-            <p className="mt-2 text-2xl font-semibold text-gray-800">
+            <p className="mt-1 text-xl font-semibold text-gray-800">
               {numberFormatter.format(meta?.total ?? 0)}
             </p>
           </div>
           {statusSummary.map((item) => (
             <div
               key={item.label}
-              className="rounded-lg border border-gray-100 bg-white px-5 py-4 shadow-sm"
+              className="rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm"
             >
               <p className="text-xs uppercase tracking-wide text-gray-500">
                 {item.label}
               </p>
-              <p className={`mt-2 text-2xl font-semibold ${item.tone}`}>
+              <p className={`mt-1 text-xl font-semibold ${item.tone}`}>
                 {numberFormatter.format(item.value)}
               </p>
             </div>
@@ -478,45 +474,45 @@ const SuperAdminUsersPage = () => {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-emerald-100">
+                  <thead className="bg-emerald-950">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                         User
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                         Role
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                         <span className="inline-flex items-center">
                           Academy
                           <InfoTip content="Resolved from academy ownership or approved memberships." />
                         </span>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                         <span className="inline-flex items-center">
                           Owner
                           <InfoTip content="Academy owner responsible for this user context." />
                         </span>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                         Contact
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                         Activity
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                         Created
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wide text-emerald-100">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
+                  <tbody className="divide-y divide-emerald-100">
                     {loading ? (
                       <tr>
                         <td
@@ -536,12 +532,15 @@ const SuperAdminUsersPage = () => {
                         </td>
                       </tr>
                     ) : (
-                      filteredUsers.map((user) => {
+                      filteredUsers.map((user, idx) => {
                         const displayName = buildDisplayName(user);
                         const isSuperAdmin = user.role === "SUPER_ADMIN";
                         const activity = getUserActivity(user);
                         return (
-                          <tr key={user.id} className="hover:bg-gray-50">
+                          <tr
+                            key={user.id}
+                            className={`${idx % 2 === 0 ? "bg-white" : "bg-emerald-50/40"} hover:bg-emerald-50/50`}
+                          >
                             <td className="px-6 py-4 text-sm font-medium text-gray-900">
                               <TruncatedCell
                                 value={displayName}

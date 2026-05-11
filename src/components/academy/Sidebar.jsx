@@ -11,7 +11,6 @@ import {
     FaSignOutAlt,
     FaTachometerAlt,
     FaUserCheck,
-    FaVideo,
 } from "react-icons/fa";
 import {
     mobileSidebarVariants,
@@ -23,9 +22,8 @@ const navItems = [
   { key: "overview", label: "Overview", icon: FaTachometerAlt },
   { key: "users", label: "Users", icon: FaUserCheck },
   { key: "notifications", label: "Notifications", icon: FaBell },
-  { key: "payments", label: "Payments", icon: FaCreditCard },
-  { key: "zoom", label: "Zoom Credits", icon: FaVideo },
-  { key: "credit-management", label: "Credit Management", icon: FaCoins },
+  { key: "finance", label: "Finance", icon: FaCreditCard },
+  { key: "credits", label: "Credits & Zoom", icon: FaCoins },
   { key: "classes", label: "Classes", icon: FaCalendarAlt },
   { key: "resources", label: "Resources", icon: FaBook },
   { key: "settings", label: "Settings", icon: FaCog },
@@ -54,7 +52,7 @@ const Sidebar = ({
     return sidebarCollapsed ? "mini" : "open";
   };
 
-  const containerClass = `fixed left-0 top-0 bottom-0 z-40 flex flex-col overflow-hidden bg-gradient-to-b from-emerald-700 via-emerald-800 to-emerald-900 text-emerald-50 shadow-[0_22px_48px_rgba(6,95,70,0.32)] transition-all duration-300`;
+  const containerClass = `fixed left-0 top-20 bottom-0 z-40 flex flex-col overflow-hidden bg-gradient-to-b from-emerald-700 via-emerald-800 to-emerald-900 text-emerald-50 shadow-[0_22px_48px_rgba(6,95,70,0.32)] transition-all duration-300`;
 
   return (
     <motion.aside
@@ -110,7 +108,7 @@ const Sidebar = ({
                 <button
                   type="button"
                   onClick={() => setActiveTab(item.key)}
-                  className={`group relative flex w-full items-center rounded-xl py-3 text-sm font-semibold tracking-wide transition-colors ${
+                  className={`group relative flex w-full items-center rounded-xl py-3.5 text-sm font-semibold tracking-wide transition-colors ${
                     sidebarCollapsed ? "justify-center px-0" : "gap-3 pl-6 pr-4"
                   } ${isActive ? activeStyles : inactiveStyles}`}
                 >
