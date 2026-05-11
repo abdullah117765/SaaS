@@ -474,40 +474,33 @@ const SuperAdminUsersPage = () => {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-emerald-100">
-                  <thead className="bg-emerald-950">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-900">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
-                        User
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
-                        Role
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">User</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Role</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
                         <span className="inline-flex items-center">
                           Academy
                           <InfoTip content="Resolved from academy ownership or approved memberships." />
                         </span>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
                         <span className="inline-flex items-center">
                           Owner
                           <InfoTip content="Academy owner responsible for this user context." />
                         </span>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
-                        Contact
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Contact</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Activity</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Created</th>
+                      <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wide text-white">
+                        Actions
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
-                        Activity
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
-                        Created
-                      </th>
-                      <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wide text-emerald-100">
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
                         Actions
                       </th>
                     </tr>

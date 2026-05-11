@@ -337,29 +337,29 @@ const SuperAdminAcademiesPage = () => {
             <>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-900">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
                         Academy
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
                         <span className="inline-flex items-center">
                           Owner
                           <InfoTip content="Primary academy owner profile and contact details." />
                         </span>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
                         Created
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wide text-white">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
+                  <tbody className="divide-y divide-gray-100">
                     {loading ? (
                       <tr>
                         <td
@@ -379,8 +379,11 @@ const SuperAdminAcademiesPage = () => {
                         </td>
                       </tr>
                     ) : (
-                      data.map((academy) => (
-                        <tr key={academy.id} className="hover:bg-gray-50">
+                      data.map((academy, idx) => (
+                        <tr
+                          key={academy.id}
+                          className={`${idx % 2 === 0 ? "bg-white" : "bg-emerald-50/40"} hover:bg-emerald-50/50`}
+                        >
                           <td className="px-6 py-4 text-sm text-gray-900">
                             <div className="font-semibold text-gray-900">
                               <TruncatedCell

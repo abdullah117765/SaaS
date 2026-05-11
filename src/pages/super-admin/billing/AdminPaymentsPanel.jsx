@@ -108,19 +108,35 @@ const AdminPaymentsPanel = () => {
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="bg-emerald-950">
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Date</th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">User</th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Item</th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Reference</th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Amount</th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
+            <tr className="bg-gray-900">
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                Date
+              </th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                User
+              </th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                Item
+              </th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                Reference
+              </th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                Amount
+              </th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
                 Fee
                 <InfoTip content="Platform fee retained by Q Edu." />
               </th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Net</th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Status</th>
-              <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-100">Actions</th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                Net
+              </th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                Status
+              </th>
+              <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-white">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>

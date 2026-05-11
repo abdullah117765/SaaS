@@ -399,19 +399,35 @@ const AdminCouponsPanel = () => {
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="bg-emerald-950">
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Code</th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Name</th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Discount</th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Applies to</th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
+            <tr className="bg-gray-900">
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                Code
+              </th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                Name
+              </th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                Discount
+              </th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                Applies to
+              </th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
                 Redemptions
                 <InfoTip content="Used / cap (or unlimited)." />
               </th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Window</th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Active</th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">Highlight</th>
-              <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-100">Actions</th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                Window
+              </th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                Active
+              </th>
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                Highlight
+              </th>
+              <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-white">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
