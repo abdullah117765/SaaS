@@ -147,7 +147,9 @@ const mapNotificationRecord = (notification) => ({
   id: notification.id,
   title: notification.title ?? "Notification",
   message: notification.body ?? "",
-  time: notification.createdAt ? new Date(notification.createdAt).toLocaleString() : "",
+  time: notification.createdAt
+    ? new Date(notification.createdAt).toLocaleString()
+    : "",
   read: Boolean(notification.readAt),
   type: notification.type ?? "GENERIC",
   actionLink: notification.data?.actionLink,
@@ -209,36 +211,33 @@ const useAcademyData = () => {
     return name ? `${name}'s Academy` : "Your Academy";
   }, [user]);
 
-  const mapPendingMembershipRecord = useCallback(
-    (membership) => {
-      const user = membership.user ?? {};
-      const profilePhotoUrl = resolveAssetUrl(user.profilePhotoUrl) ?? null;
-      return {
-        id: membership.id,
-        membershipId: membership.id,
-        userId: membership.userId,
-        name: buildDisplayName(user),
-        firstName: user.firstName ?? "",
-        lastName: user.lastName ?? "",
-        email: user.email ?? "",
-        role: normaliseRole(membership.role),
-        status: membership.status,
-        requestDate: safeLocaleDate(membership.requestedAt),
-        reason: membership.reason ?? "",
-        phoneNumber: user.phoneNumber ?? "",
-        gender: user.gender ?? "",
-        bio: user.bio ?? "",
-        dateOfBirth: user.dateOfBirth ? safeLocaleDate(user.dateOfBirth) : "",
-        addressStreet: user.addressStreet ?? "",
-        addressHouse: user.addressHouse ?? "",
-        addressCity: user.addressCity ?? "",
-        addressState: user.addressState ?? "",
-        addressCountry: user.addressCountry ?? "",
-        avatarUrl: profilePhotoUrl,
-      };
-    },
-    [],
-  );
+  const mapPendingMembershipRecord = useCallback((membership) => {
+    const user = membership.user ?? {};
+    const profilePhotoUrl = resolveAssetUrl(user.profilePhotoUrl) ?? null;
+    return {
+      id: membership.id,
+      membershipId: membership.id,
+      userId: membership.userId,
+      name: buildDisplayName(user),
+      firstName: user.firstName ?? "",
+      lastName: user.lastName ?? "",
+      email: user.email ?? "",
+      role: normaliseRole(membership.role),
+      status: membership.status,
+      requestDate: safeLocaleDate(membership.requestedAt),
+      reason: membership.reason ?? "",
+      phoneNumber: user.phoneNumber ?? "",
+      gender: user.gender ?? "",
+      bio: user.bio ?? "",
+      dateOfBirth: user.dateOfBirth ? safeLocaleDate(user.dateOfBirth) : "",
+      addressStreet: user.addressStreet ?? "",
+      addressHouse: user.addressHouse ?? "",
+      addressCity: user.addressCity ?? "",
+      addressState: user.addressState ?? "",
+      addressCountry: user.addressCountry ?? "",
+      avatarUrl: profilePhotoUrl,
+    };
+  }, []);
 
   const fetchClasses = useCallback(
     async (overrides = {}) => {
@@ -303,7 +302,9 @@ const useAcademyData = () => {
         ? payload.items.map(mapNotificationRecord)
         : [];
       setNotifications(mapped);
-      setUnreadNotifications(payload.unread ?? mapped.filter((item) => !item.read).length);
+      setUnreadNotifications(
+        payload.unread ?? mapped.filter((item) => !item.read).length,
+      );
     } catch (error) {
       console.error("Failed to load notifications", error);
       setNotifications([]);
@@ -319,8 +320,14 @@ const useAcademyData = () => {
         return;
       }
 
-      const resourceParams = new URLSearchParams({ limit: '100', page: '1', academyId: academyData.id });
-      const response = await apiRequest(`/resources?${resourceParams.toString()}`);
+      const resourceParams = new URLSearchParams({
+        limit: "100",
+        page: "1",
+        academyId: academyData.id,
+      });
+      const response = await apiRequest(
+        `/resources?${resourceParams.toString()}`,
+      );
       const rawResources = Array.isArray(response?.data)
         ? response.data
         : Array.isArray(response)
@@ -331,19 +338,21 @@ const useAcademyData = () => {
       if (userId) {
         allowedUploaderIds.add(userId);
       }
-      const filtered = mapped.filter((resource) =>
-        allowedUploaderIds.has(resource.uploaderId ?? '') || resource.visibility === 'PUBLIC',
+      const filtered = mapped.filter(
+        (resource) =>
+          allowedUploaderIds.has(resource.uploaderId ?? "") ||
+          resource.visibility === "PUBLIC",
       );
       setResources(filtered);
     } catch (error) {
-      console.error('Failed to load resources', error);
+      console.error("Failed to load resources", error);
       showToast({
-        status: 'error',
-        title: 'Unable to load resources',
+        status: "error",
+        title: "Unable to load resources",
         description:
           error instanceof Error
             ? error.message
-            : 'An unexpected error occurred while fetching resources.',
+            : "An unexpected error occurred while fetching resources.",
       });
     } finally {
       setResourcesLoading(false);
@@ -362,7 +371,9 @@ const useAcademyData = () => {
           ),
         ]);
 
-      const approvedMemberships = Array.isArray(approvedMembershipsResponse?.data)
+      const approvedMemberships = Array.isArray(
+        approvedMembershipsResponse?.data,
+      )
         ? approvedMembershipsResponse.data
         : [];
 
@@ -383,12 +394,14 @@ const useAcademyData = () => {
           ),
           classes:
             role === "TEACHER"
-              ? user._count?.teachingClasses ?? 0
-              : user._count?.classParticipants ?? 0,
+              ? (user._count?.teachingClasses ?? 0)
+              : (user._count?.classParticipants ?? 0),
           resources:
-            role === "TEACHER" ? user._count?.resources ?? 0 : undefined,
+            role === "TEACHER" ? (user._count?.resources ?? 0) : undefined,
           enrolledClasses:
-            role === "STUDENT" ? user._count?.classParticipants ?? 0 : undefined,
+            role === "STUDENT"
+              ? (user._count?.classParticipants ?? 0)
+              : undefined,
           phoneNumber: user.phoneNumber ?? "",
           gender: user.gender ?? "",
           bio: user.bio ?? "",
@@ -477,10 +490,13 @@ const useAcademyData = () => {
       ]);
 
       if (overview) {
+        // Prioritise the /academies/owner response for the ID — it's always
+        // the real academy record, whereas dashboard/overview used to return
+        // the user ID by mistake on some backend versions.
         const resolvedAcademyId =
-          overview.academy?.id ?? ownerAcademy?.id ?? "";
+          ownerAcademy?.id ?? overview.academy?.id ?? "";
         const resolvedAcademyName =
-          overview.academy?.name ?? ownerAcademy?.name ?? academyName;
+          ownerAcademy?.name ?? overview.academy?.name ?? academyName;
         const resolvedCreatedAt =
           overview.academy?.createdAt ?? ownerAcademy?.createdAt ?? nowIso;
         const resolvedUpdatedAt =
@@ -786,7 +802,10 @@ const useAcademyData = () => {
         const isFileUpload = payload instanceof FormData;
         const requestBody = isFileUpload
           ? payload
-          : { ...payload, academyId: payload.academyId ?? academyData?.id ?? null };
+          : {
+              ...payload,
+              academyId: payload.academyId ?? academyData?.id ?? null,
+            };
         if (isFileUpload && !requestBody.has("academyId")) {
           requestBody.append("academyId", academyData?.id ?? "");
         }
@@ -821,14 +840,20 @@ const useAcademyData = () => {
         const isFileUpload = updates instanceof FormData;
         const requestBody = isFileUpload
           ? updates
-          : { ...updates, academyId: updates.academyId ?? academyData?.id ?? null };
+          : {
+              ...updates,
+              academyId: updates.academyId ?? academyData?.id ?? null,
+            };
         if (isFileUpload && !requestBody.has("academyId")) {
           requestBody.append("academyId", academyData?.id ?? "");
         }
-        await apiRequest(`/resources/${resourceId}${isFileUpload ? "/upload" : ""}`, {
-          method: "PATCH",
-          body: requestBody,
-        });
+        await apiRequest(
+          `/resources/${resourceId}${isFileUpload ? "/upload" : ""}`,
+          {
+            method: "PATCH",
+            body: requestBody,
+          },
+        );
         await loadResources();
         showToast({
           status: "success",
@@ -916,6 +941,3 @@ const useAcademyData = () => {
 };
 
 export default useAcademyData;
-
-
-
