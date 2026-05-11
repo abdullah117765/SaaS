@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import apiRequest from "../../utils/apiClient";
+import { useEffect, useState } from "react";
 import Pagination from "../../components/common/Pagination";
 import SuperAdminLayout from "../../components/super-admin/SuperAdminLayout";
+import apiRequest from "../../utils/apiClient";
 
 const statusFilters = [
   { value: "ALL", label: "All statuses" },
@@ -131,21 +131,6 @@ const SuperAdminReportsPage = () => {
       active = false;
     };
   }, [status, provider, fromDate, toDate, selectedAcademyId, page, pageSize]);
-
-  const statusBreakdown = useMemo(() => {
-    if (!summary?.byStatus) {
-      return [];
-    }
-    return summary.byStatus
-      .slice()
-      .sort((a, b) => b.amount - a.amount)
-      .map((item) => ({
-        ...item,
-        percentage: summary.totalAmount
-          ? Math.round((item.amount / summary.totalAmount) * 100)
-          : 0,
-      }));
-  }, [summary]);
 
   const renderStatusBadge = (value) => {
     const base = "inline-flex rounded-full px-3 py-1 text-xs font-semibold";
@@ -291,136 +276,99 @@ const SuperAdminReportsPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 px-6 py-6 lg:grid-cols-4">
-            <div className="lg:col-span-1 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700">
-                Status breakdown
-              </h3>
-              {statusBreakdown.length === 0 ? (
-                <p className="text-sm text-gray-500">
-                  No payments recorded for the selected filters.
-                </p>
-              ) : (
-                statusBreakdown.map((item) => (
-                  <div
-                    key={item.status}
-                    className="rounded-md border border-gray-100 bg-gray-50 px-3 py-3"
-                  >
-                    <div className="flex items-center justify-between text-sm font-medium text-gray-700">
-                      <span>{item.status}</span>
-                      <span>{currencyFormatter.format(item.amount)}</span>
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-xs text-gray-500">
-                      <span>
-                        {numberFormatter.format(item.count)} transactions
-                      </span>
-                      <span>{item.percentage}%</span>
-                    </div>
-                    <div className="mt-2 h-2 w-full rounded-full bg-white">
-                      <div
-                        className="h-2 rounded-full bg-green-500"
-                        style={{ width: `${Math.min(item.percentage, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="lg:col-span-3">
-              {error ? (
-                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {error}
-                </div>
-              ) : (
-                <>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+          <div className="px-6 py-4">
+            {error ? (
+              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead>
+                      <tr className="bg-gray-900">
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">
+                          Reference
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">
+                          Academy
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">
+                          Provider
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white">
+                          Amount
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">
+                          Date
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {loading ? (
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Reference
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Academy
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Provider
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Status
-                          </th>
-                          <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Amount
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Date
-                          </th>
+                          <td
+                            colSpan={6}
+                            className="px-6 py-10 text-center text-sm text-gray-500"
+                          >
+                            Loading payments…
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 bg-white">
-                        {loading ? (
-                          <tr>
-                            <td
-                              colSpan={6}
-                              className="px-6 py-10 text-center text-sm text-gray-500"
-                            >
-                              Loading payments…
+                      ) : payments.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={6}
+                            className="px-6 py-10 text-center text-sm text-gray-500"
+                          >
+                            No payments match your current filters.
+                          </td>
+                        </tr>
+                      ) : (
+                        payments.map((payment) => (
+                          <tr key={payment.id} className="hover:bg-gray-50">
+                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                              {payment.reference ?? payment.id}
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                              {payment.userName ?? payment.userId}
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                              {payment.provider ?? "—"}
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4 text-sm">
+                              {renderStatusBadge(payment.status)}
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-700">
+                              {currencyFormatter.format(payment.amount)}{" "}
+                              {payment.currency}
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                              {payment.createdAt
+                                ? new Date(payment.createdAt).toLocaleString()
+                                : "—"}
                             </td>
                           </tr>
-                        ) : payments.length === 0 ? (
-                          <tr>
-                            <td
-                              colSpan={6}
-                              className="px-6 py-10 text-center text-sm text-gray-500"
-                            >
-                              No payments match your current filters.
-                            </td>
-                          </tr>
-                        ) : (
-                          payments.map((payment) => (
-                            <tr key={payment.id} className="hover:bg-gray-50">
-                              <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                                {payment.reference ?? payment.id}
-                              </td>
-                              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                {payment.userName ?? payment.userId}
-                              </td>
-                              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                {payment.provider ?? "—"}
-                              </td>
-                              <td className="whitespace-nowrap px-6 py-4 text-sm">
-                                {renderStatusBadge(payment.status)}
-                              </td>
-                              <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-700">
-                                {currencyFormatter.format(payment.amount)}{" "}
-                                {payment.currency}
-                              </td>
-                              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                {payment.createdAt
-                                  ? new Date(payment.createdAt).toLocaleString()
-                                  : "—"}
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
-                  <div className="mt-4">
-                    <Pagination
-                      page={meta?.currentPage ?? 1}
-                      totalPages={meta?.totalPages ?? 0}
-                      totalItems={meta?.total ?? 0}
-                      pageSize={pageSize}
-                      onPageChange={(nextPage) => setPage(nextPage)}
-                      onPageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+                <div className="mt-4">
+                  <Pagination
+                    page={meta?.currentPage ?? 1}
+                    totalPages={meta?.totalPages ?? 0}
+                    totalItems={meta?.total ?? 0}
+                    pageSize={pageSize}
+                    onPageChange={(nextPage) => setPage(nextPage)}
+                    onPageSizeChange={(size) => setPageSize(size)}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </motion.div>
       </div>
