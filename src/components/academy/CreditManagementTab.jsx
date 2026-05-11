@@ -1,13 +1,15 @@
 import { motion } from "framer-motion";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  FaChevronDown,
-  FaChevronUp,
-  FaEdit,
-  FaHistory,
-  FaPlus,
-  FaSync,
+    FaChevronDown,
+    FaChevronUp,
+    FaEdit,
+    FaExchangeAlt,
+    FaHistory,
+    FaPlus,
+    FaSync,
 } from "react-icons/fa";
+import { useToast } from "../../contexts/ToastContext";
 import apiRequest from "../../utils/apiClient";
 
 const DEFAULT_AUDIT_LOG = {
@@ -24,6 +26,7 @@ const DEFAULT_AUDIT_LOG = {
 };
 
 const CreditManagementTab = ({ academyId }) => {
+  const { showToast } = useToast();
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,28 +34,42 @@ const CreditManagementTab = ({ academyId }) => {
   const [expandedTeacher, setExpandedTeacher] = useState(null);
   const [auditLog, setAuditLog] = useState(DEFAULT_AUDIT_LOG);
   const [auditLoading, setAuditLoading] = useState(false);
-  const [auditFilters, setAuditFilters] = useState({ type: "", from: "", to: "" });
+  const [auditFilters, setAuditFilters] = useState({
+    type: "",
+    from: "",
+    to: "",
+  });
   const [auditPager, setAuditPager] = useState({ take: 20, skip: 0 });
 
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showExtendModal, setShowExtendModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
 
   const [limitForm, setLimitForm] = useState({ limit: "", reason: "" });
   const [extendForm, setExtendForm] = useState({ amount: "", reason: "" });
+  const [assignForm, setAssignForm] = useState({ amount: "", reason: "" });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (academyId) {
-      fetchTeachersSummary();
+    if (!academyId) {
+      setLoading(false);
+      setError(
+        "Academy context is not available yet. Please refresh the dashboard.",
+      );
+      return;
     }
+
+    fetchTeachersSummary();
   }, [academyId]);
 
   const fetchTeachersSummary = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiRequest(`/zoom-credits/academy/${academyId}/teachers-summary`);
+      const data = await apiRequest(
+        `/zoom-credits/academy/${academyId}/teachers-summary`,
+      );
       setTeachers(data);
     } catch (err) {
       setError(err.message);
@@ -61,18 +78,31 @@ const CreditManagementTab = ({ academyId }) => {
     }
   };
 
-  const buildAuditQuery = (teacherId, pager = auditPager, filters = auditFilters) => {
+  const buildAuditQuery = (
+    teacherId,
+    pager = auditPager,
+    filters = auditFilters,
+  ) => {
     const params = new URLSearchParams();
     params.set("academyId", academyId);
     params.set("take", String(pager.take));
     params.set("skip", String(pager.skip));
     if (filters.type) params.set("type", filters.type);
-    if (filters.from) params.set("from", new Date(`${filters.from}T00:00:00.000Z`).toISOString());
-    if (filters.to) params.set("to", new Date(`${filters.to}T23:59:59.999Z`).toISOString());
+    if (filters.from)
+      params.set(
+        "from",
+        new Date(`${filters.from}T00:00:00.000Z`).toISOString(),
+      );
+    if (filters.to)
+      params.set("to", new Date(`${filters.to}T23:59:59.999Z`).toISOString());
     return `/zoom-credits/teacher/${teacherId}/audit-log?${params.toString()}`;
   };
 
-  const fetchAuditLog = async (teacherId, pager = auditPager, filters = auditFilters) => {
+  const fetchAuditLog = async (
+    teacherId,
+    pager = auditPager,
+    filters = auditFilters,
+  ) => {
     setAuditLoading(true);
     try {
       const data = await apiRequest(buildAuditQuery(teacherId, pager, filters));
@@ -115,6 +145,12 @@ const CreditManagementTab = ({ academyId }) => {
     setShowExtendModal(true);
   };
 
+  const handleOpenAssignModal = (teacher) => {
+    setSelectedTeacher(teacher);
+    setAssignForm({ amount: "", reason: "" });
+    setShowAssignModal(true);
+  };
+
   const handleSubmitLimit = async (e) => {
     e.preventDefault();
     if (!selectedTeacher) return;
@@ -122,13 +158,22 @@ const CreditManagementTab = ({ academyId }) => {
     setSubmitting(true);
     try {
       const limit = limitForm.limit ? Number(limitForm.limit) : null;
-      await apiRequest(`/zoom-credits/teacher/${selectedTeacher.teacherId}/limit`, {
-        method: "PATCH",
-        body: {
-          academyId,
-          limit,
-          reason: limitForm.reason || undefined,
+      await apiRequest(
+        `/zoom-credits/teacher/${selectedTeacher.teacherId}/limit`,
+        {
+          method: "PATCH",
+          body: {
+            academyId,
+            limit,
+            reason: limitForm.reason || undefined,
+          },
         },
+      );
+
+      showToast({
+        status: "success",
+        title: "Limit updated",
+        description: `Credit limit updated for ${selectedTeacher.teacherName}.`,
       });
 
       setShowLimitModal(false);
@@ -139,7 +184,11 @@ const CreditManagementTab = ({ academyId }) => {
         await fetchAuditLog(selectedTeacher.teacherId);
       }
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      showToast({
+        status: "error",
+        title: "Failed to update limit",
+        description: err?.message ?? "Unable to update teacher credit limit.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -151,7 +200,11 @@ const CreditManagementTab = ({ academyId }) => {
 
     const delta = Number(extendForm.amount);
     if (!Number.isFinite(delta) || delta <= 0) {
-      alert("Please enter a positive extension amount.");
+      showToast({
+        status: "error",
+        title: "Invalid amount",
+        description: "Please enter a positive extension amount.",
+      });
       return;
     }
 
@@ -159,15 +212,24 @@ const CreditManagementTab = ({ academyId }) => {
     try {
       const currentLimit = selectedTeacher.creditLimit ?? 0;
       const nextLimit = currentLimit + delta;
-      await apiRequest(`/zoom-credits/teacher/${selectedTeacher.teacherId}/limit`, {
-        method: "PATCH",
-        body: {
-          academyId,
-          limit: nextLimit,
-          reason:
-            extendForm.reason ||
-            `Extended by +${delta} credits from ${currentLimit} to ${nextLimit}`,
+      await apiRequest(
+        `/zoom-credits/teacher/${selectedTeacher.teacherId}/limit`,
+        {
+          method: "PATCH",
+          body: {
+            academyId,
+            limit: nextLimit,
+            reason:
+              extendForm.reason ||
+              `Extended by +${delta} credits from ${currentLimit} to ${nextLimit}`,
+          },
         },
+      );
+
+      showToast({
+        status: "success",
+        title: "Limit extended",
+        description: `${selectedTeacher.teacherName} limit increased by ${delta}.`,
       });
 
       setShowExtendModal(false);
@@ -178,7 +240,66 @@ const CreditManagementTab = ({ academyId }) => {
         await fetchAuditLog(selectedTeacher.teacherId);
       }
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      showToast({
+        status: "error",
+        title: "Failed to extend limit",
+        description: err?.message ?? "Unable to extend teacher credit limit.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmitAssign = async (e) => {
+    e.preventDefault();
+    if (!selectedTeacher) return;
+
+    const amount = Number(assignForm.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      showToast({
+        status: "error",
+        title: "Invalid amount",
+        description: "Assignment amount must be greater than zero.",
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await apiRequest(
+        `/zoom-credits/teacher/${selectedTeacher.teacherId}/assign`,
+        {
+          method: "POST",
+          body: {
+            academyId,
+            amount,
+            reason:
+              assignForm.reason ||
+              `Assigned ${amount} credits to ${selectedTeacher.teacherName}`,
+          },
+        },
+      );
+
+      showToast({
+        status: "success",
+        title: "Credits assigned",
+        description: `${amount} credits were assigned to ${selectedTeacher.teacherName}.`,
+      });
+
+      setShowAssignModal(false);
+      setSelectedTeacher(null);
+      setAssignForm({ amount: "", reason: "" });
+      await fetchTeachersSummary();
+      if (expandedTeacher?.teacherId === selectedTeacher.teacherId) {
+        await fetchAuditLog(selectedTeacher.teacherId);
+      }
+    } catch (err) {
+      showToast({
+        status: "error",
+        title: "Assignment failed",
+        description:
+          err?.message ?? "Unable to assign credits to this teacher.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -247,7 +368,9 @@ const CreditManagementTab = ({ academyId }) => {
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Credit Management</h2>
+          <h2 className="text-2xl font-semibold text-gray-900">
+            Credit Management
+          </h2>
           <p className="text-sm text-gray-600">
             Manage teacher credit limits, usage, extensions, and audit history.
           </p>
@@ -263,48 +386,70 @@ const CreditManagementTab = ({ academyId }) => {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-xs text-gray-600">Total Teachers</p>
-          <p className="mt-1 text-2xl font-semibold text-gray-900">{totals.teachers}</p>
+          <p className="mt-1 text-2xl font-semibold text-gray-900">
+            {totals.teachers}
+          </p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-xs text-gray-600">Total Purchased</p>
-          <p className="mt-1 text-2xl font-semibold text-gray-900">{totals.purchased}</p>
+          <p className="mt-1 text-2xl font-semibold text-gray-900">
+            {totals.purchased}
+          </p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-xs text-gray-600">Total Used</p>
-          <p className="mt-1 text-2xl font-semibold text-emerald-600">{totals.used}</p>
+          <p className="mt-1 text-2xl font-semibold text-emerald-600">
+            {totals.used}
+          </p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-xs text-gray-600">Remaining</p>
-          <p className="mt-1 text-2xl font-semibold text-blue-600">{totals.remaining}</p>
+          <p className="mt-1 text-2xl font-semibold text-blue-600">
+            {totals.remaining}
+          </p>
         </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         {teachers.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">No teachers found for this academy</div>
+          <div className="p-8 text-center text-gray-500">
+            No teachers found for this academy
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-gray-200 bg-gray-50">
+              <thead className="bg-gray-900">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600">Teacher</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600">Email</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600">Purchased</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600">Used</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600">Balance</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600">Limit</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Teacher</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Email</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">Purchased</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">Used</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">Balance</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">Limit</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wide text-white">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {teachers.map((teacher) => (
+                {teachers.map((teacher, idx) => (
                   <React.Fragment key={teacher.teacherId}>
-                    <tr className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{teacher.teacherName}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{teacher.email}</td>
-                      <td className="px-6 py-4 text-right text-sm font-medium text-gray-900">{teacher.totalPurchased}</td>
-                      <td className="px-6 py-4 text-right text-sm font-medium text-red-600">{teacher.totalDebited}</td>
-                      <td className="px-6 py-4 text-right text-sm font-medium text-blue-600">{teacher.balance}</td>
+                    <tr
+                      className={`border-b border-emerald-100 ${idx % 2 === 0 ? "bg-white" : "bg-emerald-50/40"} hover:bg-emerald-50/50`}
+                    >
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                        {teacher.teacherName}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {teacher.email}
+                      </td>
+                      <td className="px-6 py-4 text-right text-sm font-medium text-gray-900">
+                        {teacher.totalPurchased}
+                      </td>
+                      <td className="px-6 py-4 text-right text-sm font-medium text-red-600">
+                        {teacher.totalDebited}
+                      </td>
+                      <td className="px-6 py-4 text-right text-sm font-medium text-blue-600">
+                        {teacher.balance}
+                      </td>
                       <td className="px-6 py-4 text-right text-sm font-medium">
                         {teacher.creditLimit !== null ? (
                           <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800">
@@ -323,6 +468,12 @@ const CreditManagementTab = ({ academyId }) => {
                             <FaEdit className="mr-1" /> Set limit
                           </button>
                           <button
+                            onClick={() => handleOpenAssignModal(teacher)}
+                            className="inline-flex items-center rounded-md border border-emerald-200 px-2 py-1.5 text-xs text-emerald-700 hover:bg-emerald-50"
+                          >
+                            <FaExchangeAlt className="mr-1" /> Assign credits
+                          </button>
+                          <button
                             onClick={() => handleOpenExtendModal(teacher)}
                             className="inline-flex items-center rounded-md border border-emerald-200 px-2 py-1.5 text-xs text-emerald-700 hover:bg-emerald-50"
                           >
@@ -333,19 +484,29 @@ const CreditManagementTab = ({ academyId }) => {
                             className="inline-flex items-center rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-600 hover:bg-gray-50"
                           >
                             <FaHistory className="mr-1" />
-                            {expandedTeacher?.teacherId === teacher.teacherId ? <FaChevronUp /> : <FaChevronDown />}
+                            {expandedTeacher?.teacherId ===
+                            teacher.teacherId ? (
+                              <FaChevronUp />
+                            ) : (
+                              <FaChevronDown />
+                            )}
                           </button>
                         </div>
                       </td>
                     </tr>
 
                     {expandedTeacher?.teacherId === teacher.teacherId && (
-                      <tr className="border-b border-gray-200 bg-gray-50">
+                      <tr className="border-b border-emerald-100 bg-white">
                         <td colSpan="7" className="px-6 py-4">
                           <div className="mb-4 grid grid-cols-1 gap-2 md:grid-cols-5">
                             <select
                               value={auditFilters.type}
-                              onChange={(e) => setAuditFilters((prev) => ({ ...prev, type: e.target.value }))}
+                              onChange={(e) =>
+                                setAuditFilters((prev) => ({
+                                  ...prev,
+                                  type: e.target.value,
+                                }))
+                              }
                               className="rounded-md border border-gray-300 px-3 py-2 text-sm"
                             >
                               <option value="">All types</option>
@@ -357,13 +518,23 @@ const CreditManagementTab = ({ academyId }) => {
                             <input
                               type="date"
                               value={auditFilters.from}
-                              onChange={(e) => setAuditFilters((prev) => ({ ...prev, from: e.target.value }))}
+                              onChange={(e) =>
+                                setAuditFilters((prev) => ({
+                                  ...prev,
+                                  from: e.target.value,
+                                }))
+                              }
                               className="rounded-md border border-gray-300 px-3 py-2 text-sm"
                             />
                             <input
                               type="date"
                               value={auditFilters.to}
-                              onChange={(e) => setAuditFilters((prev) => ({ ...prev, to: e.target.value }))}
+                              onChange={(e) =>
+                                setAuditFilters((prev) => ({
+                                  ...prev,
+                                  to: e.target.value,
+                                }))
+                              }
                               className="rounded-md border border-gray-300 px-3 py-2 text-sm"
                             />
                             <button
@@ -383,62 +554,114 @@ const CreditManagementTab = ({ academyId }) => {
                           {auditLoading ? (
                             <div className="flex items-center py-4">
                               <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-                              <span className="ml-2 text-sm text-gray-600">Loading audit log...</span>
+                              <span className="ml-2 text-sm text-gray-600">
+                                Loading audit log...
+                              </span>
                             </div>
                           ) : (
                             <div className="space-y-4">
                               <div className="rounded-lg border border-gray-200 bg-white p-3">
-                                <p className="text-xs font-semibold uppercase text-gray-600">Credit limit changes</p>
+                                <p className="text-xs font-semibold uppercase text-gray-600">
+                                  Credit limit changes
+                                </p>
                                 <div className="mt-2 max-h-48 space-y-2 overflow-y-auto">
                                   {auditLog.limitChanges?.length ? (
                                     auditLog.limitChanges.map((change) => (
-                                      <div key={change.id} className="rounded border border-gray-200 p-2 text-xs">
+                                      <div
+                                        key={change.id}
+                                        className="rounded border border-gray-200 p-2 text-xs"
+                                      >
                                         <p className="font-medium">
-                                          {change.oldLimit === null ? "Unlimited" : change.oldLimit} ? {change.newLimit === null ? "Unlimited" : change.newLimit}
+                                          {change.oldLimit === null
+                                            ? "Unlimited"
+                                            : change.oldLimit}{" "}
+                                          ?{" "}
+                                          {change.newLimit === null
+                                            ? "Unlimited"
+                                            : change.newLimit}
                                         </p>
-                                        <p className="text-gray-600">By: {change.changedBy}</p>
-                                        {change.reason ? <p className="text-gray-600">Reason: {change.reason}</p> : null}
-                                        <p className="text-gray-500">{new Date(change.createdAt).toLocaleString()}</p>
+                                        <p className="text-gray-600">
+                                          By: {change.changedBy}
+                                        </p>
+                                        {change.reason ? (
+                                          <p className="text-gray-600">
+                                            Reason: {change.reason}
+                                          </p>
+                                        ) : null}
+                                        <p className="text-gray-500">
+                                          {new Date(
+                                            change.createdAt,
+                                          ).toLocaleString()}
+                                        </p>
                                       </div>
                                     ))
                                   ) : (
-                                    <p className="text-xs text-gray-500">No limit changes for selected filters.</p>
+                                    <p className="text-xs text-gray-500">
+                                      No limit changes for selected filters.
+                                    </p>
                                   )}
                                 </div>
                               </div>
 
                               <div className="rounded-lg border border-gray-200 bg-white p-3">
-                                <p className="text-xs font-semibold uppercase text-gray-600">Transactions</p>
+                                <p className="text-xs font-semibold uppercase text-gray-600">
+                                  Transactions
+                                </p>
                                 <div className="mt-2 max-h-60 space-y-2 overflow-y-auto">
                                   {auditLog.transactions?.length ? (
                                     auditLog.transactions.map((tx) => (
-                                      <div key={tx.id} className="rounded border border-gray-200 p-2 text-xs">
+                                      <div
+                                        key={tx.id}
+                                        className="rounded border border-gray-200 p-2 text-xs"
+                                      >
                                         <p className="font-medium">
-                                          {tx.type}: {tx.amount} credits (Balance: {tx.runningBalance})
+                                          {tx.type}: {tx.amount} credits
+                                          (Balance: {tx.runningBalance})
                                         </p>
-                                        {tx.reason ? <p className="text-gray-600">Reason: {tx.reason}</p> : null}
-                                        <p className="text-gray-500">{new Date(tx.createdAt).toLocaleString()}</p>
+                                        {tx.reason ? (
+                                          <p className="text-gray-600">
+                                            Reason: {tx.reason}
+                                          </p>
+                                        ) : null}
+                                        <p className="text-gray-500">
+                                          {new Date(
+                                            tx.createdAt,
+                                          ).toLocaleString()}
+                                        </p>
                                       </div>
                                     ))
                                   ) : (
-                                    <p className="text-xs text-gray-500">No transactions for selected filters.</p>
+                                    <p className="text-xs text-gray-500">
+                                      No transactions for selected filters.
+                                    </p>
                                   )}
                                 </div>
 
                                 <div className="mt-3 flex items-center justify-between border-t border-gray-200 pt-3">
                                   <p className="text-xs text-gray-500">
-                                    Showing {auditLog.meta?.count ?? 0} of {auditLog.meta?.total ?? 0}
+                                    Showing {auditLog.meta?.count ?? 0} of{" "}
+                                    {auditLog.meta?.total ?? 0}
                                   </p>
                                   <div className="flex gap-2">
                                     <button
-                                      onClick={() => goAuditPage(auditLog.meta?.previousSkip ?? 0)}
-                                      disabled={auditLog.meta?.previousSkip == null}
+                                      onClick={() =>
+                                        goAuditPage(
+                                          auditLog.meta?.previousSkip ?? 0,
+                                        )
+                                      }
+                                      disabled={
+                                        auditLog.meta?.previousSkip == null
+                                      }
                                       className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                       Previous
                                     </button>
                                     <button
-                                      onClick={() => goAuditPage(auditLog.meta?.nextSkip ?? 0)}
+                                      onClick={() =>
+                                        goAuditPage(
+                                          auditLog.meta?.nextSkip ?? 0,
+                                        )
+                                      }
                                       disabled={auditLog.meta?.nextSkip == null}
                                       className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
@@ -470,32 +693,50 @@ const CreditManagementTab = ({ academyId }) => {
           >
             <form onSubmit={handleSubmitLimit}>
               <div className="border-b border-gray-200 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">Set Credit Limit for {selectedTeacher.teacherName}</h3>
-                <p className="text-sm text-gray-600">Leave empty for unlimited credits</p>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Set Credit Limit for {selectedTeacher.teacherName}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Leave empty for unlimited credits
+                </p>
               </div>
               <div className="space-y-4 px-6 py-5">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Credit Limit</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Credit Limit
+                  </label>
                   <input
                     type="number"
                     min={0}
                     value={limitForm.limit}
-                    onChange={(e) => setLimitForm((prev) => ({ ...prev, limit: e.target.value }))}
+                    onChange={(e) =>
+                      setLimitForm((prev) => ({
+                        ...prev,
+                        limit: e.target.value,
+                      }))
+                    }
                     placeholder="Leave empty for unlimited"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Reason (optional)</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Reason (optional)
+                  </label>
                   <textarea
                     value={limitForm.reason}
-                    onChange={(e) => setLimitForm((prev) => ({ ...prev, reason: e.target.value }))}
+                    onChange={(e) =>
+                      setLimitForm((prev) => ({
+                        ...prev,
+                        reason: e.target.value,
+                      }))
+                    }
                     rows={3}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
+              <div className="flex justify-end gap-3 border-t border-gray-200 bg-white px-6 py-4">
                 <button
                   type="button"
                   onClick={() => {
@@ -530,34 +771,53 @@ const CreditManagementTab = ({ academyId }) => {
           >
             <form onSubmit={handleSubmitExtend}>
               <div className="border-b border-gray-200 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">Extend Credit Limit for {selectedTeacher.teacherName}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Extend Credit Limit for {selectedTeacher.teacherName}
+                </h3>
                 <p className="text-sm text-gray-600">
-                  Current limit: {selectedTeacher.creditLimit === null ? "Unlimited" : selectedTeacher.creditLimit}
+                  Current limit:{" "}
+                  {selectedTeacher.creditLimit === null
+                    ? "Unlimited"
+                    : selectedTeacher.creditLimit}
                 </p>
               </div>
               <div className="space-y-4 px-6 py-5">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Extend by (+X)</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Extend by (+X)
+                  </label>
                   <input
                     type="number"
                     min={1}
                     value={extendForm.amount}
-                    onChange={(e) => setExtendForm((prev) => ({ ...prev, amount: e.target.value }))}
+                    onChange={(e) =>
+                      setExtendForm((prev) => ({
+                        ...prev,
+                        amount: e.target.value,
+                      }))
+                    }
                     placeholder="e.g. 100"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Reason (optional)</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Reason (optional)
+                  </label>
                   <textarea
                     value={extendForm.reason}
-                    onChange={(e) => setExtendForm((prev) => ({ ...prev, reason: e.target.value }))}
+                    onChange={(e) =>
+                      setExtendForm((prev) => ({
+                        ...prev,
+                        reason: e.target.value,
+                      }))
+                    }
                     rows={3}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
+              <div className="flex justify-end gap-3 border-t border-gray-200 bg-white px-6 py-4">
                 <button
                   type="button"
                   onClick={() => {
@@ -575,6 +835,85 @@ const CreditManagementTab = ({ academyId }) => {
                   className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {submitting ? "Extending..." : "Extend Limit"}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      ) : null}
+
+      {showAssignModal && selectedTeacher ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="w-full max-w-md rounded-2xl bg-white shadow-2xl"
+          >
+            <form onSubmit={handleSubmitAssign}>
+              <div className="border-b border-gray-200 px-6 py-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Assign Credits to {selectedTeacher.teacherName}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Credits will be transferred from owner balance to this
+                  teacher.
+                </p>
+              </div>
+              <div className="space-y-4 px-6 py-5">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={assignForm.amount}
+                    onChange={(e) =>
+                      setAssignForm((prev) => ({
+                        ...prev,
+                        amount: e.target.value,
+                      }))
+                    }
+                    placeholder="e.g. 50"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Reason (optional)
+                  </label>
+                  <textarea
+                    value={assignForm.reason}
+                    onChange={(e) =>
+                      setAssignForm((prev) => ({
+                        ...prev,
+                        reason: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 border-t border-gray-200 bg-white px-6 py-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAssignModal(false);
+                    setSelectedTeacher(null);
+                  }}
+                  disabled={submitting}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {submitting ? "Assigning..." : "Assign Credits"}
                 </button>
               </div>
             </form>

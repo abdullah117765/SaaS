@@ -204,28 +204,14 @@ const ClassesTab = ({
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="bg-emerald-950">
-                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
-                  Class
-                </th>
-                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
-                  Teacher
-                </th>
-                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
-                  Schedule
-                </th>
-                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
-                  Duration
-                </th>
-                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
-                  Students
-                </th>
-                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
-                  Status
-                </th>
-                <th scope="col" className="px-5 py-3 text-center text-xs font-semibold text-emerald-100 uppercase tracking-wide">
-                  Actions
-                </th>
+              <tr className="bg-gray-900">
+                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Class</th>
+                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Teacher</th>
+                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Schedule</th>
+                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Duration</th>
+                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Students</th>
+                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Status</th>
+                <th scope="col" className="px-5 py-3 text-center text-xs font-semibold text-white uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-emerald-50">
@@ -345,18 +331,11 @@ const ClassesTab = ({
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
-                <tr className="bg-emerald-950">
-                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
-                    Class
-                  </th>
-                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
-                    Teacher
-                  </th>
-                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
-                    Students
-                  </th>
-                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-emerald-100 uppercase tracking-wide">
-                    Attendance Rate
+                <tr className="bg-gray-900">
+                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Class</th>
+                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Teacher</th>
+                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Students</th>
+                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Attendance Rate</th>
                   </th>
                 </tr>
               </thead>

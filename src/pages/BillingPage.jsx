@@ -291,10 +291,12 @@ const BillingPage = ({ embedded = false, mode = "all", outerClassName }) => {
 
   return (
     <div
-      className={outerClassName ?? (embedded
-        ? "min-h-[calc(100vh-12rem)] w-full space-y-6 bg-gradient-to-b from-emerald-950 via-emerald-900/80 to-black p-6"
-        : "mx-auto max-w-6xl space-y-6 bg-white p-6"
-      )}
+      className={
+        outerClassName ??
+        (embedded
+          ? "min-h-[calc(100vh-12rem)] w-full space-y-6 bg-gradient-to-b from-emerald-950 via-emerald-900/80 to-black p-6"
+          : "mx-auto max-w-6xl space-y-6 bg-white p-6")
+      }
     >
       <header className="flex items-center justify-between">
         <div>
@@ -639,7 +641,7 @@ const BillingPage = ({ embedded = false, mode = "all", outerClassName }) => {
               <div className="overflow-x-auto rounded-xl border border-emerald-800/20">
                 <table className="min-w-full text-sm">
                   <thead>
-                    <tr className="border-b border-emerald-100 bg-emerald-950 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
+                    <tr className="bg-gray-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
                       <th className="py-2 pr-4">Date</th>
                       <th className="py-2 pr-4">Provider</th>
                       <th className="py-2 pr-4">Description</th>
