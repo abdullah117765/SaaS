@@ -149,6 +149,10 @@ const ZoomCreditsTab = ({ zoomCredits, onPurchaseCredits }) => {
       (zoomCredits?.available ?? 0) + (zoomCredits?.used ?? 0),
   };
 
+  const freeGrantEntry = (zoomCredits?.history ?? []).find(
+    (item) => item.isInitialGrant,
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -156,6 +160,17 @@ const ZoomCreditsTab = ({ zoomCredits, onPurchaseCredits }) => {
       transition={{ duration: 0.5 }}
       className="space-y-6 bg-white"
     >
+      {freeGrantEntry && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <span className="mt-0.5 text-amber-500">★</span>
+          <div>
+            <span className="font-semibold">Free starter credits included.</span>
+            {" "}Your academy received{" "}
+            <span className="font-bold">{freeGrantEntry.amount} free credits</span>
+            {" "}as a one-time welcome grant. These are granted once per academy and cannot be re-issued.
+          </div>
+        </div>
+      )}
       <div className="rounded-lg p-0">
         <h3 className="text-lg font-bold text-gray-800 mb-3">Zoom Credits</h3>
         <div className="grid grid-cols-3 gap-3">
@@ -166,9 +181,7 @@ const ZoomCreditsTab = ({ zoomCredits, onPurchaseCredits }) => {
             <div className="text-2xl font-bold text-green-600">
               {summary.available}
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Ready for classes
-            </p>
+            <p className="text-xs text-gray-500 mt-0.5">Ready for classes</p>
           </div>
           <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-emerald-700 mb-1">
@@ -177,9 +190,7 @@ const ZoomCreditsTab = ({ zoomCredits, onPurchaseCredits }) => {
             <div className="text-2xl font-bold text-emerald-700">
               {summary.used}
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Consumed in sessions
-            </p>
+            <p className="text-xs text-gray-500 mt-0.5">Consumed in sessions</p>
           </div>
           <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-emerald-700 mb-1">
@@ -188,9 +199,7 @@ const ZoomCreditsTab = ({ zoomCredits, onPurchaseCredits }) => {
             <div className="text-2xl font-bold text-emerald-800">
               {summary.total}
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Lifetime allocation
-            </p>
+            <p className="text-xs text-gray-500 mt-0.5">Lifetime allocation</p>
           </div>
         </div>
       </div>
@@ -340,7 +349,11 @@ const ZoomCreditsTab = ({ zoomCredits, onPurchaseCredits }) => {
                       {new Date(item.date).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {item.type === "purchase" ? (
+                      {item.isInitialGrant ? (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
+                          Free Grant
+                        </span>
+                      ) : item.type === "purchase" ? (
                         <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                           Purchase
                         </span>
@@ -351,9 +364,11 @@ const ZoomCreditsTab = ({ zoomCredits, onPurchaseCredits }) => {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {item.type === "purchase"
-                        ? `Credit purchase (Transaction ID: ${item.transactionId})`
-                        : `Used for class: ${item.className}`}
+                      {item.isInitialGrant
+                        ? "Free starter credits — one-time academy welcome grant"
+                        : item.type === "purchase"
+                          ? `Credit purchase (Transaction ID: ${item.transactionId})`
+                          : `Used for class: ${item.className}`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       {item.type === "purchase" ? (

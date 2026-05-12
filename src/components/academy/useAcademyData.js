@@ -130,6 +130,7 @@ const mapTransactionRecord = (record) => {
     status: paymentStatus,
     transactionId: record.id,
     className: description,
+    isInitialGrant: source === "academy_owner.initial_grant",
   };
 };
 
@@ -513,6 +514,7 @@ const useAcademyData = () => {
               status: "Completed",
               transactionId: tx.id,
               className: tx.summary,
+              isInitialGrant: tx.summary === "Initial academy owner credit grant",
             }))
           : [];
 
