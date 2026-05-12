@@ -10,6 +10,7 @@ import FinanceTab from "./FinanceTab";
 import NotificationsTab from "./NotificationsTab";
 import OverviewTab from "./OverviewTab";
 import PaymentsTab from "./PaymentsTab";
+import RecordingsTab from "./RecordingsTab";
 import ResourcesTab from "./ResourcesTab";
 import UsersTab from "./UsersTab";
 import ZoomCreditsTab from "./ZoomCreditsTab";
@@ -179,6 +180,8 @@ const TabContent = ({
             onRefreshResources={onRefreshResources}
           />
         );
+      case "recordings":
+        return <RecordingsTab key="recordings" academyId={academyId} />;
       default:
         return null;
     }

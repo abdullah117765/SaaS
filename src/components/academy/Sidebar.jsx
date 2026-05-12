@@ -11,6 +11,7 @@ import {
     FaSignOutAlt,
     FaTachometerAlt,
     FaUserCheck,
+    FaVideo,
 } from "react-icons/fa";
 import {
     mobileSidebarVariants,
@@ -26,6 +27,7 @@ const navItems = [
   { key: "credits", label: "Credits & Zoom", icon: FaCoins },
   { key: "classes", label: "Classes", icon: FaCalendarAlt },
   { key: "resources", label: "Resources", icon: FaBook },
+  { key: "recordings", label: "Recordings", icon: FaVideo },
   { key: "settings", label: "Settings", icon: FaCog },
 ];
 

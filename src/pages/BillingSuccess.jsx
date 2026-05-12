@@ -71,7 +71,9 @@ const BillingSuccess = () => {
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Payment Successful!</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Payment Successful!
+        </h1>
         <p className="mt-2 text-gray-500">
           Your payment was received. We&apos;re confirming your credits{dots}
         </p>

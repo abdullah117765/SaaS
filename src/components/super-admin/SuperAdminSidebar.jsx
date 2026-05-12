@@ -14,6 +14,7 @@ import {
     FaTachometerAlt,
     FaTag,
     FaUsers,
+    FaVideo,
 } from "react-icons/fa";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -83,6 +84,12 @@ const navItems = [
     label: "Contact Inbox",
     to: "/super-admin/contact-messages",
     icon: FaEnvelope,
+  },
+  {
+    key: "recordings",
+    label: "Recordings",
+    to: "/super-admin/recordings",
+    icon: FaVideo,
   },
 ];
 

@@ -74,8 +74,11 @@ const SuperAdminContactMessagesPage = lazy(() =>
   import("./pages/super-admin/SuperAdminContactMessagesPage").catch(() => ({
     default: () => <div className="p-8">Contact Inbox - Coming Soon</div>,
   })),
-);
-const AcademyDashboard = lazy(() =>
+);const SuperAdminRecordingsPage = lazy(() =>
+  import("./pages/super-admin/SuperAdminRecordingsPage").catch(() => ({
+    default: () => <div className="p-8">Recordings - Coming Soon</div>,
+  }))
+);const AcademyDashboard = lazy(() =>
   import("./pages/AcademyDashboard").catch(() => ({
     default: () => <div className="p-8">Academy Dashboard - Coming Soon</div>,
   })),
@@ -495,6 +498,14 @@ const AppContent = () => {
               element={
                 <RoleBasedRoute requiredRole="super_admin">
                   <SuperAdminContactMessagesPage />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/super-admin/recordings"
+              element={
+                <RoleBasedRoute requiredRole="super_admin">
+                  <SuperAdminRecordingsPage />
                 </RoleBasedRoute>
               }
             />
