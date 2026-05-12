@@ -10,7 +10,7 @@ import {
     FaPlus,
     FaSearch,
     FaTimes,
-    FaVideo
+    FaVideo,
 } from "react-icons/fa";
 import apiRequest from "../../utils/apiClient";
 import Pagination from "../common/Pagination";
@@ -153,7 +153,16 @@ const RecordingsTab = ({ academyId }) => {
     setAddBusy(true);
     setAddError(null);
     try {
-      await apiRequest("/recordings", { method: "POST", body: addForm });
+      // Strip empty strings so backend @IsUrl() validators don't reject blank optional fields
+      const payload = {
+        classId: addForm.classId,
+        source: addForm.source,
+        ...(addForm.playUrl     ? { playUrl:     addForm.playUrl }     : {}),
+        ...(addForm.downloadUrl ? { downloadUrl: addForm.downloadUrl } : {}),
+        ...(addForm.password    ? { password:    addForm.password }    : {}),
+        ...(addForm.topic       ? { topic:       addForm.topic }       : {}),
+      };
+      await apiRequest("/recordings", { method: "POST", body: payload });
       setShowAddModal(false);
       setAddForm({
         classId: "",
