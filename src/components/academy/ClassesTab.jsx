@@ -1,20 +1,47 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
 import {
-  FaSearch,
-  FaVideo,
-  FaExternalLinkAlt,
-  FaChalkboardTeacher,
-  FaClock,
-  FaCalendarAlt,
-  FaUserFriends,
-} from 'react-icons/fa';
+    FaCalendarAlt,
+    FaChalkboardTeacher,
+    FaCheck,
+    FaClock,
+    FaCopy,
+    FaExternalLinkAlt,
+    FaSearch,
+    FaUserFriends,
+    FaVideo,
+} from "react-icons/fa";
+
+const CopyLinkButton = ({ url }) => {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      title={copied ? "Copied!" : "Copy join link"}
+      className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-500 hover:border-emerald-300 hover:text-emerald-600 transition-colors"
+    >
+      {copied ? (
+        <FaCheck className="h-3 w-3 text-emerald-500" />
+      ) : (
+        <FaCopy className="h-3 w-3" />
+      )}
+    </button>
+  );
+};
 
 const STATUS_FILTER_MAP = {
-  upcoming: 'UPCOMING',
-  ongoing: 'ONGOING',
-  past: 'ENDED',
-  attendance: 'ENDED',
+  upcoming: "UPCOMING",
+  ongoing: "ONGOING",
+  past: "ENDED",
+  attendance: "ENDED",
 };
 
 const EMPTY_CLASSES_SUMMARY = {
@@ -34,37 +61,39 @@ const ClassesTab = ({
   activeSubTab,
   setActiveSubTab,
 }) => {
-  const [searchTerm, setSearchTerm] = useState(filters.search ?? '');
-  const [teacherFilter, setTeacherFilter] = useState(filters.teacherId ?? 'all');
+  const [searchTerm, setSearchTerm] = useState(filters.search ?? "");
+  const [teacherFilter, setTeacherFilter] = useState(
+    filters.teacherId ?? "all",
+  );
   const [selectedClass, setSelectedClass] = useState(null);
   const [showClassModal, setShowClassModal] = useState(false);
 
   const classesSummary = { ...EMPTY_CLASSES_SUMMARY, ...(summary ?? {}) };
 
   useEffect(() => {
-    setSearchTerm(filters.search ?? '');
+    setSearchTerm(filters.search ?? "");
   }, [filters.search]);
 
   useEffect(() => {
-    setTeacherFilter(filters.teacherId ?? 'all');
+    setTeacherFilter(filters.teacherId ?? "all");
   }, [filters.teacherId]);
 
   useEffect(() => {
-    if (typeof onChangeFilters !== 'function') {
+    if (typeof onChangeFilters !== "function") {
       return;
     }
-    const expected = STATUS_FILTER_MAP[activeSubTab] ?? 'ALL';
-    const current = filters.status ?? 'ALL';
+    const expected = STATUS_FILTER_MAP[activeSubTab] ?? "ALL";
+    const current = filters.status ?? "ALL";
     if (expected !== current) {
       onChangeFilters({ status: expected, page: 1 });
     }
   }, [activeSubTab, filters.status, onChangeFilters]);
 
   useEffect(() => {
-    if (typeof onChangeFilters !== 'function') {
+    if (typeof onChangeFilters !== "function") {
       return;
     }
-    const normalized = filters.search ?? '';
+    const normalized = filters.search ?? "";
     if (searchTerm === normalized) {
       return;
     }
@@ -87,46 +116,47 @@ const ClassesTab = ({
   const statusCards = useMemo(
     () => [
       {
-        key: 'upcoming',
-        label: 'Upcoming',
+        key: "upcoming",
+        label: "Upcoming",
         value: classesSummary.upcoming,
         Icon: FaCalendarAlt,
-        accent: 'bg-blue-50 text-blue-600',
+        accent: "bg-blue-50 text-blue-600",
       },
       {
-        key: 'ongoing',
-        label: 'In Progress',
+        key: "ongoing",
+        label: "In Progress",
         value: classesSummary.ongoing,
         Icon: FaClock,
-        accent: 'bg-red-50 text-red-600',
+        accent: "bg-red-50 text-red-600",
       },
       {
-        key: 'ended',
-        label: 'Completed (30d)',
+        key: "ended",
+        label: "Completed (30d)",
         value: classesSummary.ended,
         Icon: FaVideo,
-        accent: 'bg-emerald-50 text-emerald-600',
+        accent: "bg-emerald-50 text-emerald-600",
       },
       {
-        key: 'cancelled',
-        label: 'Cancelled',
+        key: "cancelled",
+        label: "Cancelled",
         value: classesSummary.cancelled,
         Icon: FaUserFriends,
-        accent: 'bg-amber-50 text-amber-600',
+        accent: "bg-amber-50 text-amber-600",
       },
     ],
     [classesSummary],
   );
 
   const attendanceMetrics = useMemo(() => {
-    const endedClasses = classes.filter((cls) => cls.status === 'ended');
+    const endedClasses = classes.filter((cls) => cls.status === "ended");
     if (!endedClasses.length) {
       return { averageRate: 0, best: null, worst: null, rates: [] };
     }
 
     const rates = endedClasses.map((cls) => {
       const base = cls.students_count || 0;
-      const value = base > 0 ? Math.round(((cls.attendance ?? 0) / base) * 100) : 0;
+      const value =
+        base > 0 ? Math.round(((cls.attendance ?? 0) / base) * 100) : 0;
       return { ...cls, rate: value };
     });
 
@@ -145,8 +175,11 @@ const ClassesTab = ({
   const handleTeacherFilterChange = (event) => {
     const value = event.target.value;
     setTeacherFilter(value);
-    if (typeof onChangeFilters === 'function') {
-      onChangeFilters({ teacherId: value === 'all' ? undefined : value, page: 1 });
+    if (typeof onChangeFilters === "function") {
+      onChangeFilters({
+        teacherId: value === "all" ? undefined : value,
+        page: 1,
+      });
     }
   };
 
@@ -168,27 +201,31 @@ const ClassesTab = ({
     if (!link) {
       return;
     }
-    window.open(link, '_blank', 'noopener,noreferrer');
+    window.open(link, "_blank", "noopener,noreferrer");
   };
 
   const renderStatusBadge = (status) => {
     const accent =
-      status === 'ongoing'
-        ? 'bg-red-100 text-red-700'
-        : status === 'upcoming'
-        ? 'bg-blue-100 text-blue-700'
-        : status === 'cancelled'
-        ? 'bg-amber-100 text-amber-700'
-        : 'bg-gray-100 text-gray-600';
+      status === "ongoing"
+        ? "bg-red-100 text-red-700"
+        : status === "upcoming"
+          ? "bg-blue-100 text-blue-700"
+          : status === "cancelled"
+            ? "bg-amber-100 text-amber-700"
+            : "bg-gray-100 text-gray-600";
 
     return (
-      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${accent}`}>
+      <span
+        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${accent}`}
+      >
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
   };
 
-  const renderEmptyState = (message = 'No classes found for the selected filters.') => (
+  const renderEmptyState = (
+    message = "No classes found for the selected filters.",
+  ) => (
     <div className="flex items-center justify-center rounded-lg border border-dashed border-gray-200 bg-white p-10 text-sm text-gray-500">
       {message}
     </div>
@@ -205,52 +242,129 @@ const ClassesTab = ({
           <table className="min-w-full">
             <thead>
               <tr className="bg-gray-900">
-                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Class</th>
-                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Teacher</th>
-                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Schedule</th>
-                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Duration</th>
-                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Students</th>
-                <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Status</th>
-                <th scope="col" className="px-5 py-3 text-center text-xs font-semibold text-white uppercase tracking-wide">Actions</th>
+                <th
+                  scope="col"
+                  className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide"
+                >
+                  Class
+                </th>
+                <th
+                  scope="col"
+                  className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide"
+                >
+                  Teacher
+                </th>
+                <th
+                  scope="col"
+                  className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide"
+                >
+                  Schedule
+                </th>
+                <th
+                  scope="col"
+                  className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide"
+                >
+                  Duration
+                </th>
+                <th
+                  scope="col"
+                  className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide"
+                >
+                  Students
+                </th>
+                <th
+                  scope="col"
+                  className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide"
+                >
+                  Status
+                </th>
+                <th
+                  scope="col"
+                  className="px-5 py-3 text-center text-xs font-semibold text-white uppercase tracking-wide"
+                >
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-emerald-50">
-              {rows.map((classItem, idx) => (
-                <tr key={classItem.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50/30'} hover:bg-emerald-50/60 transition-colors`}>
-                  <td className="px-5 py-3.5">
-                    <div className="text-sm font-semibold text-slate-900">{classItem.title}</div>
-                    {classItem.description && (
-                      <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">{classItem.description}</p>
-                    )}
-                  </td>
-                  <td className="px-5 py-3.5 text-sm text-slate-600">{classItem.teacher || 'Ã¢â‚¬â€'}</td>
-                  <td className="px-5 py-3.5 text-sm text-slate-600">
-                    <div>{classItem.schedule || new Date(classItem.date).toLocaleString()}</div>
-                    {classItem.timezone && <div className="text-xs text-slate-400">{classItem.timezone}</div>}
-                  </td>
-                  <td className="px-5 py-3.5 text-sm text-slate-600 whitespace-nowrap">{classItem.duration} min</td>
-                  <td className="px-5 py-3.5 text-sm text-slate-600">{classItem.students_count ?? 0}</td>
-                  <td className="px-5 py-3.5">{renderStatusBadge(classItem.status)}</td>
-                  <td className="px-5 py-3.5 text-center">
-                    <div className="flex justify-center gap-2">
-                      {classItem.status !== 'ended' && classItem.zoomLink && (
-                        <button
-                          onClick={() => openZoomLink(classItem.zoomLink)}
-                          className="inline-flex items-center rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50 transition-colors"
-                        >
-                          <FaExternalLinkAlt className="mr-1 h-3 w-3" /> Join
-                        </button>
+              {rows.map((classItem, idx) => {
+                const meetingUrl = classItem.zoomStartUrl ?? classItem.zoomLink;
+                const canJoin =
+                  meetingUrl &&
+                  !["ended", "cancelled"].includes(classItem.status);
+                return (
+                  <tr
+                    key={classItem.id}
+                    className={`${idx % 2 === 0 ? "bg-white" : "bg-emerald-50/30"} hover:bg-emerald-50/60 transition-colors`}
+                  >
+                    <td className="px-5 py-3.5">
+                      <div className="text-sm font-semibold text-slate-900">
+                        {classItem.title}
+                      </div>
+                      {classItem.description && (
+                        <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">
+                          {classItem.description}
+                        </p>
                       )}
-                      <button
-                        onClick={() => handleViewDetails(classItem)}
-                        className="inline-flex items-center rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-800 transition-colors"
-                      >
-                        Details
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-5 py-3.5 text-sm text-slate-600">
+                      {classItem.teacher || "—"}
+                    </td>
+                    <td className="px-5 py-3.5 text-sm text-slate-600">
+                      <div>
+                        {classItem.schedule ||
+                          new Date(classItem.date).toLocaleString()}
+                      </div>
+                      {classItem.timezone && (
+                        <div className="text-xs text-slate-400">
+                          {classItem.timezone}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 text-sm text-slate-600 whitespace-nowrap">
+                      {classItem.duration} min
+                    </td>
+                    <td className="px-5 py-3.5 text-sm text-slate-600">
+                      {classItem.students_count ?? 0}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {renderStatusBadge(classItem.status)}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex flex-col items-start gap-1.5">
+                        {canJoin && (
+                          <div className="flex items-center gap-1.5">
+                            <a
+                              href={meetingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50 transition-colors"
+                            >
+                              <FaExternalLinkAlt className="mr-1 h-3 w-3" />
+                              {classItem.zoomStartUrl ? "Start" : "Join"}
+                            </a>
+                            <CopyLinkButton url={meetingUrl} />
+                          </div>
+                        )}
+                        {meetingUrl && (
+                          <p
+                            className="max-w-[200px] truncate text-xs text-gray-400"
+                            title={meetingUrl}
+                          >
+                            {meetingUrl}
+                          </p>
+                        )}
+                        <button
+                          onClick={() => handleViewDetails(classItem)}
+                          className="inline-flex items-center rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-800 transition-colors"
+                        >
+                          Details
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -262,25 +376,39 @@ const ClassesTab = ({
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Average Attendance</p>
-          <p className="mt-2 text-3xl font-bold text-blue-700">{attendanceMetrics.averageRate}%</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+            Average Attendance
+          </p>
+          <p className="mt-2 text-3xl font-bold text-blue-700">
+            {attendanceMetrics.averageRate}%
+          </p>
         </div>
         <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Best Performing</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            Best Performing
+          </p>
           <p className="mt-2 text-base font-semibold text-slate-900">
-            {attendanceMetrics.best ? attendanceMetrics.best.title : 'Ã¢â‚¬â€'}
+            {attendanceMetrics.best ? attendanceMetrics.best.title : "Ã¢â‚¬â€"}
           </p>
           {attendanceMetrics.best && (
-            <p className="text-sm text-emerald-600">{attendanceMetrics.best.rate}% attendance</p>
+            <p className="text-sm text-emerald-600">
+              {attendanceMetrics.best.rate}% attendance
+            </p>
           )}
         </div>
         <div className="rounded-xl border border-amber-100 bg-amber-50 p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Needs Attention</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+            Needs Attention
+          </p>
           <p className="mt-2 text-base font-semibold text-slate-900">
-            {attendanceMetrics.worst ? attendanceMetrics.worst.title : 'Ã¢â‚¬â€'}
+            {attendanceMetrics.worst
+              ? attendanceMetrics.worst.title
+              : "Ã¢â‚¬â€"}
           </p>
           {attendanceMetrics.worst && (
-            <p className="text-sm text-amber-600">{attendanceMetrics.worst.rate}% attendance</p>
+            <p className="text-sm text-amber-600">
+              {attendanceMetrics.worst.rate}% attendance
+            </p>
           )}
         </div>
       </div>
@@ -290,21 +418,52 @@ const ClassesTab = ({
             <table className="min-w-full">
               <thead>
                 <tr className="bg-gray-900">
-                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Class</th>
-                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Teacher</th>
-                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Students</th>
-                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide">Attendance Rate</th>
+                  <th
+                    scope="col"
+                    className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide"
+                  >
+                    Class
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide"
+                  >
+                    Teacher
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide"
+                  >
+                    Students
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-5 py-3 text-left text-xs font-semibold text-white uppercase tracking-wide"
+                  >
+                    Attendance Rate
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-emerald-50">
                 {attendanceMetrics.rates.map((item, idx) => {
                   const participants = item.students_count ?? 0;
                   return (
-                    <tr key={item.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50/30'} hover:bg-emerald-50/60 transition-colors`}>
-                      <td className="px-5 py-3.5 text-sm font-semibold text-slate-900">{item.title}</td>
-                      <td className="px-5 py-3.5 text-sm text-slate-600">{item.teacher || 'Ã¢â‚¬â€'}</td>
-                      <td className="px-5 py-3.5 text-sm text-slate-600">{participants}</td>
-                      <td className="px-5 py-3.5 text-sm font-medium text-emerald-700">{item.rate}%</td>
+                    <tr
+                      key={item.id}
+                      className={`${idx % 2 === 0 ? "bg-white" : "bg-emerald-50/30"} hover:bg-emerald-50/60 transition-colors`}
+                    >
+                      <td className="px-5 py-3.5 text-sm font-semibold text-slate-900">
+                        {item.title}
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-slate-600">
+                        {item.teacher || "Ã¢â‚¬â€"}
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-slate-600">
+                        {participants}
+                      </td>
+                      <td className="px-5 py-3.5 text-sm font-medium text-emerald-700">
+                        {item.rate}%
+                      </td>
                     </tr>
                   );
                 })}
@@ -313,7 +472,7 @@ const ClassesTab = ({
           </div>
         </div>
       ) : (
-        renderEmptyState('No attendance data available yet.')
+        renderEmptyState("No attendance data available yet.")
       )}
     </div>
   );
@@ -337,11 +496,23 @@ const ClassesTab = ({
           <div
             key={card.key}
             className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-4 shadow-sm cursor-pointer hover:border-emerald-200 transition-colors"
-            onClick={() => handleTabChange(card.key === 'ended' ? 'past' : card.key === 'cancelled' ? 'past' : card.key)}
+            onClick={() =>
+              handleTabChange(
+                card.key === "ended"
+                  ? "past"
+                  : card.key === "cancelled"
+                    ? "past"
+                    : card.key,
+              )
+            }
           >
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{card.label}</p>
-              <p className="mt-1.5 text-2xl font-bold text-slate-900">{card.value}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {card.label}
+              </p>
+              <p className="mt-1.5 text-2xl font-bold text-slate-900">
+                {card.value}
+              </p>
             </div>
             <div className={`rounded-full p-3 ${card.accent}`}>
               <card.Icon className="h-5 w-5" />
@@ -352,17 +523,19 @@ const ClassesTab = ({
 
       <div className="border-b border-emerald-100">
         <nav className="-mb-px flex space-x-6">
-          {['upcoming', 'ongoing', 'past', 'attendance'].map((tab) => (
+          {["upcoming", "ongoing", "past", "attendance"].map((tab) => (
             <button
               key={tab}
               onClick={() => handleTabChange(tab)}
               className={`whitespace-nowrap border-b-2 py-3 text-sm font-semibold transition-colors ${
                 activeSubTab === tab
-                  ? 'border-emerald-600 text-emerald-700'
-                  : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
+                  ? "border-emerald-600 text-emerald-700"
+                  : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
               }`}
             >
-              {tab === 'past' ? 'Completed' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === "past"
+                ? "Completed"
+                : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </nav>
@@ -406,7 +579,7 @@ const ClassesTab = ({
         <div className="flex items-center justify-center rounded-lg border border-dashed border-gray-200 bg-white p-10 text-sm text-gray-500">
           Loading classes...
         </div>
-      ) : activeSubTab === 'attendance' ? (
+      ) : activeSubTab === "attendance" ? (
         renderAttendanceInsights()
       ) : (
         renderClassesTable(classes)
@@ -424,8 +597,8 @@ const ClassesTab = ({
               onClick={() => handlePageChange(meta.previousPage)}
               className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm ${
                 meta.previousPage && !loading
-                  ? 'border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50'
-                  : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                  ? "border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50"
+                  : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
               }`}
             >
               Previous
@@ -436,8 +609,8 @@ const ClassesTab = ({
               onClick={() => handlePageChange(meta.nextPage)}
               className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm ${
                 meta.nextPage && !loading
-                  ? 'border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50'
-                  : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                  ? "border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50"
+                  : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
               }`}
             >
               Next
@@ -450,41 +623,64 @@ const ClassesTab = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
           <div className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
             <div className="bg-emerald-950 px-6 py-4">
-              <h3 className="text-xl font-semibold text-white">{selectedClass.title}</h3>
-              <p className="mt-1 text-sm text-emerald-200">{selectedClass.description || 'No description provided.'}</p>
+              <h3 className="text-xl font-semibold text-white">
+                {selectedClass.title}
+              </h3>
+              <p className="mt-1 text-sm text-emerald-200">
+                {selectedClass.description || "No description provided."}
+              </p>
             </div>
             <div className="space-y-4 px-6 py-5 text-sm text-slate-700">
               <div className="flex items-center gap-2 text-slate-600">
                 <FaChalkboardTeacher className="text-emerald-600" />
                 <span>Teacher:</span>
-                <span className="font-semibold text-slate-900">{selectedClass.teacher || 'Unassigned'}</span>
+                <span className="font-semibold text-slate-900">
+                  {selectedClass.teacher || "Unassigned"}
+                </span>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Start</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Start
+                  </p>
                   <p className="mt-1 font-medium text-slate-900">
                     {new Date(selectedClass.date).toLocaleString()}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">End</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    End
+                  </p>
                   <p className="mt-1 font-medium text-slate-900">
-                    {selectedClass.endDate ? new Date(selectedClass.endDate).toLocaleString() : 'Ã¢â‚¬â€'}
+                    {selectedClass.endDate
+                      ? new Date(selectedClass.endDate).toLocaleString()
+                      : "Ã¢â‚¬â€"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Duration</p>
-                  <p className="mt-1 font-medium text-slate-900">{selectedClass.duration} minutes</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Duration
+                  </p>
+                  <p className="mt-1 font-medium text-slate-900">
+                    {selectedClass.duration} minutes
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Students</p>
-                  <p className="mt-1 font-medium text-slate-900">{selectedClass.students_count ?? 0}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Students
+                  </p>
+                  <p className="mt-1 font-medium text-slate-900">
+                    {selectedClass.students_count ?? 0}
+                  </p>
                 </div>
-                {selectedClass.status === 'ended' && (
+                {selectedClass.status === "ended" && (
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Attendance</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      Attendance
+                    </p>
                     <p className="mt-1 font-medium text-slate-900">
-                      {selectedClass.attendance ?? 0}/{selectedClass.students_count ?? 0}
+                      {selectedClass.attendance ?? 0}/
+                      {selectedClass.students_count ?? 0}
                     </p>
                   </div>
                 )}
@@ -517,4 +713,3 @@ const ClassesTab = ({
 };
 
 export default ClassesTab;
-

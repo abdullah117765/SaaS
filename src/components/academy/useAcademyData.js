@@ -82,6 +82,8 @@ const mapClassRecord = (record) => {
     status,
     timezone: record.timezone,
     zoomLink: record.zoomJoinUrl,
+    zoomStartUrl: record.zoomStartUrl ?? null,
+    scheduledStart: record.scheduledStart,
   };
 };
 

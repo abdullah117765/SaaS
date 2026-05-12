@@ -8,6 +8,7 @@ const DEFAULT_FILTERS = {
   search: "",
   from: "",
   to: "",
+  page: 1,
 };
 
 const DEFAULT_STUDENT_FILTERS = {
@@ -127,8 +128,8 @@ const useTeacherDashboardData = () => {
 
     try {
       const params = new URLSearchParams({
-        page: "1",
-        limit: "100",
+        page: String(filters.page ?? 1),
+        limit: "15",
         teacherId: userId,
       });
 
@@ -243,6 +244,8 @@ const useTeacherDashboardData = () => {
     setFilters((prev) => ({
       ...prev,
       ...updates,
+      // reset to page 1 whenever any filter OTHER than page changes
+      ...(Object.keys(updates).some((k) => k !== "page") ? { page: 1 } : {}),
     }));
   }, []);
 
@@ -388,6 +391,59 @@ const useTeacherDashboardData = () => {
     [load, showToast],
   );
 
+  const endClass = useCallback(
+    async (classId) => {
+      try {
+        await apiRequest(`/classes/${classId}/end`, { method: "POST" });
+        showToast({
+          status: "success",
+          title: "Class ended",
+          description: "The class has been marked as ended.",
+        });
+        await load();
+        return { success: true };
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Unable to end class.";
+        showToast({
+          status: "error",
+          title: "Failed to end class",
+          description: message,
+        });
+        return { success: false, error: message };
+      }
+    },
+    [load, showToast],
+  );
+
+  const recreateClass = useCallback(
+    async (classId, payload = {}) => {
+      try {
+        await apiRequest(`/classes/${classId}/recreate`, {
+          method: "POST",
+          body: payload,
+        });
+        showToast({
+          status: "success",
+          title: "Class recreated",
+          description: "A new class has been scheduled with the same students.",
+        });
+        await load();
+        return { success: true };
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Unable to recreate class.";
+        showToast({
+          status: "error",
+          title: "Recreation failed",
+          description: message,
+        });
+        return { success: false, error: message };
+      }
+    },
+    [load, showToast],
+  );
+
   return {
     loading,
     loadingAcademies,
@@ -408,6 +464,8 @@ const useTeacherDashboardData = () => {
     createClass,
     updateClass,
     cancelClass,
+    endClass,
+    recreateClass,
     deleteClass,
     academyOptions,
     activeAcademyId,

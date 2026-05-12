@@ -80,7 +80,7 @@ const SuperAdminRecordingsPage = () => {
   // Load academy options once
   useEffect(() => {
     let active = true;
-    apiRequest("/academies?limit=200&status=ACTIVE")
+    apiRequest("/academies/admin?limit=200")
       .then((r) => {
         if (!active) return;
         setAcademyOptions(

@@ -27,6 +27,8 @@ const useStudentDashboardData = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [classes, setClasses] = useState([]);
+  const [classesMeta, setClassesMeta] = useState(null);
+  const [classPage, setClassPage] = useState(1);
   const [teachers, setTeachers] = useState([]);
 
   const activeAcademyId = useMemo(
@@ -42,14 +44,15 @@ const useStudentDashboardData = () => {
   );
 
   const metrics = useMemo(() => ({
-    totalClasses: classes.length,
+    totalClasses: classesMeta?.total ?? classes.length,
     upcomingCount: upcomingClasses.length,
     teacherCount: teachers.length,
-  }), [classes.length, upcomingClasses.length, teachers.length]);
+  }), [classesMeta, classes.length, upcomingClasses.length, teachers.length]);
 
   const load = useCallback(async () => {
     if (!activeAcademyId) {
       setClasses([]);
+      setClassesMeta(null);
       setTeachers([]);
       setLoading(false);
       return;
@@ -59,7 +62,7 @@ const useStudentDashboardData = () => {
     setError(null);
 
     try {
-      const classParams = new URLSearchParams({ limit: '50', page: '1', academyId: activeAcademyId });
+      const classParams = new URLSearchParams({ limit: '15', page: String(classPage), academyId: activeAcademyId });
       const teacherParams = new URLSearchParams({ limit: '100', page: '1', status: 'APPROVED' });
       const [classResponse, teachersResponse] = await Promise.all([
         apiRequest(`/classes?${classParams.toString()}`),
@@ -96,6 +99,7 @@ const useStudentDashboardData = () => {
       }));
 
       setClasses(fetchedClasses);
+      setClassesMeta(classResponse?.meta ?? null);
       setTeachers(fetchedTeachers);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to load dashboard data';
@@ -103,7 +107,7 @@ const useStudentDashboardData = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeAcademyId]);
+  }, [activeAcademyId, classPage]);
 
   useEffect(() => {
     load();
@@ -114,6 +118,9 @@ const useStudentDashboardData = () => {
     loading,
     error,
     classes,
+    classesMeta,
+    classPage,
+    setClassPage,
     teachers,
     metrics,
     upcomingClasses,

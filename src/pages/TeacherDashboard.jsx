@@ -72,6 +72,8 @@ const TeacherDashboard = () => {
     createClass,
     updateClass,
     cancelClass,
+    endClass,
+    recreateClass,
     deleteClass,
     academyOptions,
     activeAcademyId,
@@ -604,6 +606,8 @@ const TeacherDashboard = () => {
                 onCreateClass={createClass}
                 onUpdateClass={updateClass}
                 onCancelClass={cancelClass}
+                onEndClass={endClass}
+                onRecreateClass={recreateClass}
                 onDeleteClass={deleteClass}
                 loading={loading}
                 meta={classesMeta}

@@ -2,14 +2,43 @@ import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import {
     FaBan,
+    FaCheck,
     FaClock,
+    FaCopy,
     FaEdit,
     FaExternalLinkAlt,
     FaPlus,
+    FaRedo,
     FaSearch,
+    FaStopCircle,
     FaSyncAlt,
     FaTrash,
 } from "react-icons/fa";
+
+const CopyLinkButton = ({ url }) => {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      title={copied ? "Copied!" : "Copy link"}
+      className="inline-flex items-center rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-400 hover:border-emerald-300 hover:text-emerald-600 transition-colors"
+    >
+      {copied ? (
+        <FaCheck className="h-3 w-3 text-emerald-500" />
+      ) : (
+        <FaCopy className="h-3 w-3" />
+      )}
+    </button>
+  );
+};
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -54,6 +83,8 @@ const TeacherClassesTab = ({
   onCreateClass,
   onUpdateClass,
   onCancelClass,
+  onEndClass,
+  onRecreateClass,
   onDeleteClass,
   loading,
   meta,
@@ -74,6 +105,10 @@ const TeacherClassesTab = ({
   const [cancelReason, setCancelReason] = useState("");
   const [cancelError, setCancelError] = useState("");
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
+  const [recreateTarget, setRecreateTarget] = useState(null);
+  const [recreateTimeChoice, setRecreateTimeChoice] = useState("same");
+  const [recreateForm, setRecreateForm] = useState({ date: "", startTime: "", duration: 60 });
+  const [recreateSubmitting, setRecreateSubmitting] = useState(false);
 
   const canSchedule = hasAcademyAccess && !loadingAcademies;
 
@@ -154,6 +189,48 @@ const TeacherClassesTab = ({
     setCancelTarget(null);
     setCancelReason("");
     setCancelError("");
+  };
+
+  const openRecreateModal = (cls) => {
+    const start = cls.scheduledStart ? new Date(cls.scheduledStart) : new Date();
+    const end = cls.scheduledEnd ? new Date(cls.scheduledEnd) : new Date(start.getTime() + 3600000);
+    const duration = Math.max(Math.round((end.getTime() - start.getTime()) / 60000), 15);
+    setRecreateTarget(cls);
+    setRecreateTimeChoice("same");
+    setRecreateForm({
+      date: start.toISOString().slice(0, 10),
+      startTime: start.toISOString().slice(11, 16),
+      duration,
+    });
+  };
+
+  const closeRecreateModal = () => {
+    if (recreateSubmitting) return;
+    setRecreateTarget(null);
+  };
+
+  const handleRecreateSubmit = async (event) => {
+    event.preventDefault();
+    let payload = {};
+    if (recreateTimeChoice === "new") {
+      const { date, startTime, duration } = recreateForm;
+      const start = new Date(`${date}T${startTime || "00:00"}:00`);
+      if (Number.isNaN(start.getTime())) return;
+      const end = new Date(start.getTime() + Number(duration || 60) * 60000);
+      payload = { scheduledStart: start.toISOString(), scheduledEnd: end.toISOString() };
+    }
+    setRecreateSubmitting(true);
+    const result = await onRecreateClass(recreateTarget.id, payload);
+    setRecreateSubmitting(false);
+    if (result?.success) closeRecreateModal();
+  };
+
+  const handleEndClass = async (cls) => {
+    const confirmed = window.confirm(
+      `End the class "${cls.title}"? This will mark it as ended and close the Zoom meeting.`
+    );
+    if (!confirmed) return;
+    await onEndClass(cls.id);
   };
 
   const handleFormChange = (event) => {
@@ -424,6 +501,9 @@ const TeacherClassesTab = ({
                   <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                     Participants
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
+                    Join Link
+                  </th>
                   <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wide text-emerald-100">
                     Actions
                   </th>
@@ -432,16 +512,13 @@ const TeacherClassesTab = ({
               <tbody className="divide-y divide-emerald-100">
                 {classes.map((cls, idx) => {
                   const meetingUrl = cls.zoomStartUrl ?? cls.zoomJoinUrl;
-                  const hasEndedByTime = cls.scheduledEnd
-                    ? new Date(cls.scheduledEnd).getTime() <= Date.now()
-                    : false;
                   const canJoin =
                     meetingUrl &&
-                    !hasEndedByTime &&
                     !["ended", "cancelled"].includes(cls.status ?? "");
                   const canClear =
-                    hasEndedByTime ||
                     ["ended", "cancelled"].includes(cls.status ?? "");
+                  const canEnd = cls.status === "ongoing" || cls.status === "upcoming";
+                  const canRecreate = ["ended", "cancelled"].includes(cls.status ?? "");
 
                   return (
                     <tr
@@ -475,44 +552,82 @@ const TeacherClassesTab = ({
                       <td className="px-6 py-4 text-sm text-gray-700">
                         {cls.participants}
                       </td>
-                      <td className="px-6 py-4 text-center text-sm text-gray-700">
-                        <div className="flex justify-center gap-2">
-                          {canJoin ? (
-                            <a
-                              href={meetingUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {meetingUrl ? (
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1.5">
+                              {canJoin ? (
+                                <a
+                                  href={meetingUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                >
+                                  <FaExternalLinkAlt className="mr-1" />{" "}
+                                  {cls.zoomStartUrl ? "Start" : "Join"}
+                                </a>
+                              ) : (
+                                <span className="text-xs text-gray-400">Ended</span>
+                              )}
+                              <CopyLinkButton url={meetingUrl} />
+                            </div>
+                            <p
+                              className="max-w-[200px] truncate text-xs text-gray-400"
+                              title={meetingUrl}
                             >
-                              <FaExternalLinkAlt className="mr-1" />{" "}
-                              {cls.zoomStartUrl ? "Start" : "Join"}
-                            </a>
-                          ) : null}
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(cls)}
-                            className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:border-emerald-400 hover:text-emerald-600"
-                          >
-                            <FaEdit className="mr-1" /> Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              canClear ? handleClear(cls) : openCancelModal(cls)
-                            }
-                            className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
-                          >
-                            {canClear ? (
-                              <>
-                                <FaTrash className="mr-1" /> Clear
-                              </>
-                            ) : (
-                              <>
-                                <FaBan className="mr-1" /> Cancel
-                              </>
+                              {meetingUrl}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">No link</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-center text-sm text-gray-700">
+                        <div className="flex flex-wrap justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(cls)}
+                              className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:border-emerald-400 hover:text-emerald-600"
+                            >
+                              <FaEdit className="mr-1" /> Edit
+                            </button>
+                            {canEnd && (
+                              <button
+                                type="button"
+                                onClick={() => handleEndClass(cls)}
+                                className="inline-flex items-center rounded-md border border-orange-200 px-3 py-1.5 text-xs text-orange-600 hover:bg-orange-50"
+                              >
+                                <FaStopCircle className="mr-1" /> End
+                              </button>
                             )}
-                          </button>
-                        </div>
+                            {canRecreate && (
+                              <button
+                                type="button"
+                                onClick={() => openRecreateModal(cls)}
+                                className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50"
+                              >
+                                <FaRedo className="mr-1" /> Recreate
+                              </button>
+                            )}
+                            {canClear && (
+                              <button
+                                type="button"
+                                onClick={() => handleClear(cls)}
+                                className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
+                              >
+                                <FaTrash className="mr-1" /> Clear
+                              </button>
+                            )}
+                            {!canClear && !canEnd && (
+                              <button
+                                type="button"
+                                onClick={() => openCancelModal(cls)}
+                                className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
+                              >
+                                <FaBan className="mr-1" /> Cancel
+                              </button>
+                            )}
+                          </div>
                       </td>
                     </tr>
                   );
@@ -521,6 +636,48 @@ const TeacherClassesTab = ({
             </table>
           )}
         </div>
+        {meta && meta.totalPages > 1 ? (
+          <div className="flex items-center justify-between border-t border-gray-200 px-6 py-3">
+            <p className="text-xs text-gray-500">
+              Page {meta.currentPage} of {meta.totalPages} &mdash; {meta.total} total
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={!meta.previousPage}
+                onClick={() => onUpdateFilters({ page: meta.currentPage - 1 })}
+                className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:border-emerald-400 hover:text-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                &laquo; Prev
+              </button>
+              {Array.from({ length: Math.min(meta.totalPages, 7) }, (_, i) => {
+                const page = i + 1;
+                return (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => onUpdateFilters({ page })}
+                    className={`inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium ${
+                      meta.currentPage === page
+                        ? "border-emerald-500 bg-emerald-600 text-white"
+                        : "border-gray-300 text-gray-600 hover:border-emerald-400 hover:text-emerald-600"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                disabled={!meta.nextPage}
+                onClick={() => onUpdateFilters({ page: meta.currentPage + 1 })}
+                className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:border-emerald-400 hover:text-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next &raquo;
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {showFormModal ? (
@@ -797,6 +954,109 @@ const TeacherClassesTab = ({
                   className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-400"
                 >
                   {cancelSubmitting ? "Cancelling..." : "Cancel class"}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      ) : null}
+
+      {recreateTarget ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="w-full max-w-lg rounded-2xl bg-white shadow-2xl"
+          >
+            <form onSubmit={handleRecreateSubmit}>
+              <div className="border-b border-gray-200 px-6 py-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Recreate class
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {recreateTarget.title} — same students will be enrolled automatically.
+                </p>
+              </div>
+              <div className="space-y-4 px-6 py-5">
+                <div className="flex gap-4">
+                  <label className="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                    <input
+                      type="radio"
+                      name="timeChoice"
+                      value="same"
+                      checked={recreateTimeChoice === "same"}
+                      onChange={() => setRecreateTimeChoice("same")}
+                      className="accent-emerald-600"
+                    />
+                    Same time
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                    <input
+                      type="radio"
+                      name="timeChoice"
+                      value="new"
+                      checked={recreateTimeChoice === "new"}
+                      onChange={() => setRecreateTimeChoice("new")}
+                      className="accent-emerald-600"
+                    />
+                    New time
+                  </label>
+                </div>
+                {recreateTimeChoice === "new" && (
+                  <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">Date</label>
+                        <input
+                          type="date"
+                          value={recreateForm.date}
+                          onChange={(e) => setRecreateForm((prev) => ({ ...prev, date: e.target.value }))}
+                          required
+                          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">Start time</label>
+                        <input
+                          type="time"
+                          value={recreateForm.startTime}
+                          onChange={(e) => setRecreateForm((prev) => ({ ...prev, startTime: e.target.value }))}
+                          required
+                          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">Duration (minutes)</label>
+                      <input
+                        type="number"
+                        min={15}
+                        step={5}
+                        value={recreateForm.duration}
+                        onChange={(e) => setRecreateForm((prev) => ({ ...prev, duration: e.target.value }))}
+                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={closeRecreateModal}
+                  disabled={recreateSubmitting}
+                  className="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  disabled={recreateSubmitting}
+                  className="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <FaRedo className="mr-2" />
+                  {recreateSubmitting ? "Creating..." : "Create class"}
                 </button>
               </div>
             </form>
