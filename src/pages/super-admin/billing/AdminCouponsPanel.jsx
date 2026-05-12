@@ -38,7 +38,13 @@ const AdminCouponsPanel = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(blank);
   const [submitting, setSubmitting] = useState(false);
-  const [filters, setFilters] = useState({ page: 1, limit: 25, search: "", appliesTo: "", active: "" });
+  const [filters, setFilters] = useState({
+    page: 1,
+    limit: 25,
+    search: "",
+    appliesTo: "",
+    active: "",
+  });
 
   const debouncedSearch = useDebouncedValue(filters.search, 400);
 
@@ -72,7 +78,13 @@ const AdminCouponsPanel = () => {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.page, filters.limit, debouncedSearch, filters.appliesTo, filters.active]);
+  }, [
+    filters.page,
+    filters.limit,
+    debouncedSearch,
+    filters.appliesTo,
+    filters.active,
+  ]);
 
   const coupons = data?.items ?? [];
 
@@ -182,14 +194,18 @@ const AdminCouponsPanel = () => {
           placeholder="Search code or name…"
           className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
           value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))}
+          onChange={(e) =>
+            setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))
+          }
         />
         <label className="text-sm text-slate-600">
           Applies to
           <select
             className="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
             value={filters.appliesTo}
-            onChange={(e) => setFilters((f) => ({ ...f, appliesTo: e.target.value, page: 1 }))}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, appliesTo: e.target.value, page: 1 }))
+            }
           >
             <option value="">All</option>
             <option value="ALL">All products</option>
@@ -202,7 +218,9 @@ const AdminCouponsPanel = () => {
           <select
             className="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
             value={filters.active}
-            onChange={(e) => setFilters((f) => ({ ...f, active: e.target.value, page: 1 }))}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, active: e.target.value, page: 1 }))
+            }
           >
             <option value="">All</option>
             <option value="true">Active</option>
@@ -555,7 +573,9 @@ const AdminCouponsPanel = () => {
           totalItems={data.total}
           pageSize={filters.limit}
           onPageChange={(p) => setFilters((f) => ({ ...f, page: p }))}
-          onPageSizeChange={(s) => setFilters((f) => ({ ...f, limit: s, page: 1 }))}
+          onPageSizeChange={(s) =>
+            setFilters((f) => ({ ...f, limit: s, page: 1 }))
+          }
         />
       ) : null}
     </section>

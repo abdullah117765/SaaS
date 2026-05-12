@@ -477,8 +477,12 @@ const SuperAdminUsersPage = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-900">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">User</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Role</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                        User
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                        Role
+                      </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
                         <span className="inline-flex items-center">
                           Academy
@@ -491,10 +495,18 @@ const SuperAdminUsersPage = () => {
                           <InfoTip content="Academy owner responsible for this user context." />
                         </span>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Contact</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Activity</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Created</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                        Contact
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                        Activity
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                        Created
+                      </th>
                       <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wide text-white">
                         Actions
                       </th>

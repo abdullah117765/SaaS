@@ -225,7 +225,9 @@ const TeacherClassesTab = ({
     event.preventDefault();
     const reason = cancelReason.trim();
     if (reason.length < 3) {
-      setCancelError("A cancellation reason of at least 3 characters is required.");
+      setCancelError(
+        "A cancellation reason of at least 3 characters is required.",
+      );
       return;
     }
 
@@ -407,28 +409,28 @@ const TeacherClassesTab = ({
               No classes aligned with your filters.
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-emerald-100">
+              <thead className="bg-emerald-950">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                     Class
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                     Starts
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-emerald-100">
                     Participants
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wide text-emerald-100">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                {classes.map((cls) => {
+              <tbody className="divide-y divide-emerald-100">
+                {classes.map((cls, idx) => {
                   const meetingUrl = cls.zoomStartUrl ?? cls.zoomJoinUrl;
                   const hasEndedByTime = cls.scheduledEnd
                     ? new Date(cls.scheduledEnd).getTime() <= Date.now()
@@ -442,7 +444,10 @@ const TeacherClassesTab = ({
                     ["ended", "cancelled"].includes(cls.status ?? "");
 
                   return (
-                    <tr key={cls.id} className="hover:bg-gray-50">
+                    <tr
+                      key={cls.id}
+                      className={`${idx % 2 === 0 ? "bg-white" : "bg-emerald-50/40"} hover:bg-emerald-50/50`}
+                    >
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <p className="font-semibold">{cls.title}</p>
                         <p className="text-xs text-gray-500">

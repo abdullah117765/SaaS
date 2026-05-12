@@ -16,7 +16,14 @@ const PROVIDERS = ["", "stripe", "manual"];
 const AdminPaymentsPanel = () => {
   const { showToast } = useToast();
   const [searchInput, setSearchInput] = useState("");
-  const [filters, setFilters] = useState({ page: 1, limit: 20, status: "", provider: "", from: "", to: "" });
+  const [filters, setFilters] = useState({
+    page: 1,
+    limit: 20,
+    status: "",
+    provider: "",
+    from: "",
+    to: "",
+  });
   const debouncedSearch = useDebouncedValue(searchInput, 400);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -25,7 +32,10 @@ const AdminPaymentsPanel = () => {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await listAdminPayments({ ...filters, search: debouncedSearch || undefined });
+      const res = await listAdminPayments({
+        ...filters,
+        search: debouncedSearch || undefined,
+      });
       setData(res);
     } catch (err) {
       showToast({
@@ -45,7 +55,15 @@ const AdminPaymentsPanel = () => {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.page, filters.limit, filters.status, filters.provider, filters.from, filters.to, debouncedSearch]);
+  }, [
+    filters.page,
+    filters.limit,
+    filters.status,
+    filters.provider,
+    filters.from,
+    filters.to,
+    debouncedSearch,
+  ]);
 
   const handleRefund = async (payment, partial = false) => {
     let amountCents;
@@ -98,10 +116,14 @@ const AdminPaymentsPanel = () => {
           <select
             className="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
             value={filters.status}
-            onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))
+            }
           >
             {STATUSES.map((s) => (
-              <option key={s} value={s}>{s || "All"}</option>
+              <option key={s} value={s}>
+                {s || "All"}
+              </option>
             ))}
           </select>
         </label>
@@ -110,10 +132,14 @@ const AdminPaymentsPanel = () => {
           <select
             className="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
             value={filters.provider}
-            onChange={(e) => setFilters((f) => ({ ...f, provider: e.target.value, page: 1 }))}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, provider: e.target.value, page: 1 }))
+            }
           >
             {PROVIDERS.map((p) => (
-              <option key={p} value={p}>{p || "All"}</option>
+              <option key={p} value={p}>
+                {p || "All"}
+              </option>
             ))}
           </select>
         </label>
@@ -123,7 +149,9 @@ const AdminPaymentsPanel = () => {
             type="date"
             className="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
             value={filters.from}
-            onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value, page: 1 }))}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, from: e.target.value, page: 1 }))
+            }
           />
         </label>
         <label className="text-sm text-slate-600">
@@ -132,7 +160,9 @@ const AdminPaymentsPanel = () => {
             type="date"
             className="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
             value={filters.to}
-            onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value, page: 1 }))}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, to: e.target.value, page: 1 }))
+            }
           />
         </label>
         <span className="ml-auto text-xs text-slate-500">
@@ -275,7 +305,9 @@ const AdminPaymentsPanel = () => {
           totalItems={data.total}
           pageSize={filters.limit}
           onPageChange={(p) => setFilters((f) => ({ ...f, page: p }))}
-          onPageSizeChange={(s) => setFilters((f) => ({ ...f, limit: s, page: 1 }))}
+          onPageSizeChange={(s) =>
+            setFilters((f) => ({ ...f, limit: s, page: 1 }))
+          }
         />
       ) : null}
     </section>

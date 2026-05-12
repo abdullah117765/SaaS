@@ -164,10 +164,15 @@ const ZoomCreditsTab = ({ zoomCredits, onPurchaseCredits }) => {
         <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <span className="mt-0.5 text-amber-500">★</span>
           <div>
-            <span className="font-semibold">Free starter credits included.</span>
-            {" "}Your academy received{" "}
-            <span className="font-bold">{freeGrantEntry.amount} free credits</span>
-            {" "}as a one-time welcome grant. These are granted once per academy and cannot be re-issued.
+            <span className="font-semibold">
+              Free starter credits included.
+            </span>{" "}
+            Your academy received{" "}
+            <span className="font-bold">
+              {freeGrantEntry.amount} free credits
+            </span>{" "}
+            as a one-time welcome grant. These are granted once per academy and
+            cannot be re-issued.
           </div>
         </div>
       )}

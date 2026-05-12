@@ -33,7 +33,10 @@ const AdminSubscriptionsPanel = () => {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await listAdminSubscriptions({ ...filters, search: debouncedSearch || undefined });
+      const res = await listAdminSubscriptions({
+        ...filters,
+        search: debouncedSearch || undefined,
+      });
       setData(res);
     } catch (err) {
       showToast({
@@ -227,7 +230,9 @@ const AdminSubscriptionsPanel = () => {
           totalItems={data.total}
           pageSize={filters.limit}
           onPageChange={(p) => setFilters((f) => ({ ...f, page: p }))}
-          onPageSizeChange={(s) => setFilters((f) => ({ ...f, limit: s, page: 1 }))}
+          onPageSizeChange={(s) =>
+            setFilters((f) => ({ ...f, limit: s, page: 1 }))
+          }
         />
       ) : null}
     </section>

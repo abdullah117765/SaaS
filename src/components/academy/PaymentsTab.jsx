@@ -204,7 +204,7 @@ const PaymentsTab = ({ payments = [], loading = false }) => {
                 pageItems.map((payment, idx) => (
                   <tr
                     key={payment.id}
-                    className={`border-b border-slate-100 text-slate-700 hover:bg-emerald-50/50 ${idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50/30'}`}
+                    className={`border-b border-slate-100 text-slate-700 hover:bg-emerald-50/50 ${idx % 2 === 0 ? "bg-white" : "bg-emerald-50/30"}`}
                   >
                     <td className="px-3 py-2 text-xs">
                       {new Date(payment.createdAt).toLocaleString()}

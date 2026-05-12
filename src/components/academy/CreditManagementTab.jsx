@@ -420,13 +420,27 @@ const CreditManagementTab = ({ academyId }) => {
             <table className="w-full">
               <thead className="bg-gray-900">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Teacher</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Email</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">Purchased</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">Used</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">Balance</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">Limit</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wide text-white">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                    Teacher
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">
+                    Purchased
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">
+                    Used
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">
+                    Balance
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">
+                    Limit
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wide text-white">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>

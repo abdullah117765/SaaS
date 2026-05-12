@@ -514,7 +514,8 @@ const useAcademyData = () => {
               status: "Completed",
               transactionId: tx.id,
               className: tx.summary,
-              isInitialGrant: tx.summary === "Initial academy owner credit grant",
+              isInitialGrant:
+                tx.summary === "Initial academy owner credit grant",
             }))
           : [];
 
