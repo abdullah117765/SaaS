@@ -33,6 +33,8 @@ const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const AcademySubscription = lazy(() => import("./pages/AcademySubscription"));
 const BillingPage = lazy(() => import("./pages/BillingPage"));
+const BillingSuccess = lazy(() => import("./pages/BillingSuccess"));
+const BillingCancel = lazy(() => import("./pages/BillingCancel"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const SuperAdminBillingPage = lazy(() =>
   import("./pages/super-admin/SuperAdminBillingPage").catch(() => ({
@@ -552,6 +554,25 @@ const AppContent = () => {
                 </RoleBasedRoute>
               }
             />
+            {/* Stripe redirect landing pages — must be inside PrivateRoute so
+                the user is still authenticated when Stripe bounces them back */}
+            <Route
+              path="/billing/success"
+              element={
+                <PrivateRoute>
+                  <BillingSuccess />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/billing/cancel"
+              element={
+                <PrivateRoute>
+                  <BillingCancel />
+                </PrivateRoute>
+              }
+            />
+
             <Route
               path="/teacher/billing"
               element={<Navigate to="/teacher/dashboard" replace />}
