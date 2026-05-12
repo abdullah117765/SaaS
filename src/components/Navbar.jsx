@@ -270,22 +270,6 @@ const Navbar = () => {
                         Billing
                       </Link>
                     )}
-                    {userRole === "teacher" && (
-                      <>
-                        <Link
-                          to="/teacher/subscription"
-                          className="px-3 py-2 text-sm font-medium text-gray-700 transition-all duration-200 border-b-2 border-transparent hover:text-primary-600 hover:border-primary-500"
-                        >
-                          Subscription
-                        </Link>
-                        <Link
-                          to="/teacher/billing"
-                          className="px-3 py-2 text-sm font-medium text-gray-700 transition-all duration-200 border-b-2 border-transparent hover:text-primary-600 hover:border-primary-500"
-                        >
-                          Billing
-                        </Link>
-                      </>
-                    )}
                   </>
                 )}
               </div>
@@ -412,25 +396,6 @@ const Navbar = () => {
                                 <FaGraduationCap className="w-4 h-4 mr-3 text-gray-400" />
                                 Subscription
                               </Link>
-                            )}
-
-                            {userRole === "teacher" && (
-                              <>
-                                <Link
-                                  to="/teacher/subscription"
-                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600"
-                                >
-                                  <FaGraduationCap className="w-4 h-4 mr-3 text-gray-400" />
-                                  Subscription
-                                </Link>
-                                <Link
-                                  to="/teacher/billing"
-                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600"
-                                >
-                                  <FaChartBar className="w-4 h-4 mr-3 text-gray-400" />
-                                  Billing
-                                </Link>
-                              </>
                             )}
 
                             {userRole === "super_admin" && (
@@ -661,24 +626,6 @@ const Navbar = () => {
                       <span className="font-medium">Billing</span>
                     </Link>
                   )}
-                  {userRole === "teacher" && (
-                    <>
-                      <Link
-                        to="/teacher/subscription"
-                        className="flex items-center space-x-3 px-3 py-2.5 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition-all duration-200"
-                      >
-                        <FaGraduationCap className="w-5 h-5 text-gray-400" />
-                        <span className="font-medium">Subscription</span>
-                      </Link>
-                      <Link
-                        to="/teacher/billing"
-                        className="flex items-center space-x-3 px-3 py-2.5 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition-all duration-200"
-                      >
-                        <FaChartBar className="w-5 h-5 text-gray-400" />
-                        <span className="font-medium">Billing</span>
-                      </Link>
-                    </>
-                  )}
                 </>
               )}
             </div>
@@ -723,24 +670,6 @@ const Navbar = () => {
                         </Link>
                         <Link
                           to="/academy/billing"
-                          className="flex items-center space-x-3 px-3 py-2.5 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition-all duration-200"
-                        >
-                          <FaChartBar className="w-5 h-5 text-gray-400" />
-                          <span className="font-medium">Billing</span>
-                        </Link>
-                      </>
-                    )}
-                    {userRole === "teacher" && (
-                      <>
-                        <Link
-                          to="/teacher/subscription"
-                          className="flex items-center space-x-3 px-3 py-2.5 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition-all duration-200"
-                        >
-                          <FaGraduationCap className="w-5 h-5 text-gray-400" />
-                          <span className="font-medium">Subscription</span>
-                        </Link>
-                        <Link
-                          to="/teacher/billing"
                           className="flex items-center space-x-3 px-3 py-2.5 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition-all duration-200"
                         >
                           <FaChartBar className="w-5 h-5 text-gray-400" />
