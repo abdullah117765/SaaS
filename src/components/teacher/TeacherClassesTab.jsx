@@ -107,7 +107,11 @@ const TeacherClassesTab = ({
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
   const [recreateTarget, setRecreateTarget] = useState(null);
   const [recreateTimeChoice, setRecreateTimeChoice] = useState("same");
-  const [recreateForm, setRecreateForm] = useState({ date: "", startTime: "", duration: 60 });
+  const [recreateForm, setRecreateForm] = useState({
+    date: "",
+    startTime: "",
+    duration: 60,
+  });
   const [recreateSubmitting, setRecreateSubmitting] = useState(false);
 
   const canSchedule = hasAcademyAccess && !loadingAcademies;
@@ -192,9 +196,16 @@ const TeacherClassesTab = ({
   };
 
   const openRecreateModal = (cls) => {
-    const start = cls.scheduledStart ? new Date(cls.scheduledStart) : new Date();
-    const end = cls.scheduledEnd ? new Date(cls.scheduledEnd) : new Date(start.getTime() + 3600000);
-    const duration = Math.max(Math.round((end.getTime() - start.getTime()) / 60000), 15);
+    const start = cls.scheduledStart
+      ? new Date(cls.scheduledStart)
+      : new Date();
+    const end = cls.scheduledEnd
+      ? new Date(cls.scheduledEnd)
+      : new Date(start.getTime() + 3600000);
+    const duration = Math.max(
+      Math.round((end.getTime() - start.getTime()) / 60000),
+      15,
+    );
     setRecreateTarget(cls);
     setRecreateTimeChoice("same");
     setRecreateForm({
@@ -217,7 +228,10 @@ const TeacherClassesTab = ({
       const start = new Date(`${date}T${startTime || "00:00"}:00`);
       if (Number.isNaN(start.getTime())) return;
       const end = new Date(start.getTime() + Number(duration || 60) * 60000);
-      payload = { scheduledStart: start.toISOString(), scheduledEnd: end.toISOString() };
+      payload = {
+        scheduledStart: start.toISOString(),
+        scheduledEnd: end.toISOString(),
+      };
     }
     setRecreateSubmitting(true);
     const result = await onRecreateClass(recreateTarget.id, payload);
@@ -227,7 +241,7 @@ const TeacherClassesTab = ({
 
   const handleEndClass = async (cls) => {
     const confirmed = window.confirm(
-      `End the class "${cls.title}"? This will mark it as ended and close the Zoom meeting.`
+      `End the class "${cls.title}"? This will mark it as ended and close the Zoom meeting.`,
     );
     if (!confirmed) return;
     await onEndClass(cls.id);
@@ -515,10 +529,14 @@ const TeacherClassesTab = ({
                   const canJoin =
                     meetingUrl &&
                     !["ended", "cancelled"].includes(cls.status ?? "");
-                  const canClear =
-                    ["ended", "cancelled"].includes(cls.status ?? "");
-                  const canEnd = cls.status === "ongoing" || cls.status === "upcoming";
-                  const canRecreate = ["ended", "cancelled"].includes(cls.status ?? "");
+                  const canClear = ["ended", "cancelled"].includes(
+                    cls.status ?? "",
+                  );
+                  const canEnd =
+                    cls.status === "ongoing" || cls.status === "upcoming";
+                  const canRecreate = ["ended", "cancelled"].includes(
+                    cls.status ?? "",
+                  );
 
                   return (
                     <tr
@@ -567,7 +585,9 @@ const TeacherClassesTab = ({
                                   {cls.zoomStartUrl ? "Start" : "Join"}
                                 </a>
                               ) : (
-                                <span className="text-xs text-gray-400">Ended</span>
+                                <span className="text-xs text-gray-400">
+                                  Ended
+                                </span>
                               )}
                               <CopyLinkButton url={meetingUrl} />
                             </div>
@@ -584,50 +604,50 @@ const TeacherClassesTab = ({
                       </td>
                       <td className="px-6 py-4 text-center text-sm text-gray-700">
                         <div className="flex flex-wrap justify-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(cls)}
+                            className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:border-emerald-400 hover:text-emerald-600"
+                          >
+                            <FaEdit className="mr-1" /> Edit
+                          </button>
+                          {canEnd && (
                             <button
                               type="button"
-                              onClick={() => openEditModal(cls)}
-                              className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:border-emerald-400 hover:text-emerald-600"
+                              onClick={() => handleEndClass(cls)}
+                              className="inline-flex items-center rounded-md border border-orange-200 px-3 py-1.5 text-xs text-orange-600 hover:bg-orange-50"
                             >
-                              <FaEdit className="mr-1" /> Edit
+                              <FaStopCircle className="mr-1" /> End
                             </button>
-                            {canEnd && (
-                              <button
-                                type="button"
-                                onClick={() => handleEndClass(cls)}
-                                className="inline-flex items-center rounded-md border border-orange-200 px-3 py-1.5 text-xs text-orange-600 hover:bg-orange-50"
-                              >
-                                <FaStopCircle className="mr-1" /> End
-                              </button>
-                            )}
-                            {canRecreate && (
-                              <button
-                                type="button"
-                                onClick={() => openRecreateModal(cls)}
-                                className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50"
-                              >
-                                <FaRedo className="mr-1" /> Recreate
-                              </button>
-                            )}
-                            {canClear && (
-                              <button
-                                type="button"
-                                onClick={() => handleClear(cls)}
-                                className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
-                              >
-                                <FaTrash className="mr-1" /> Clear
-                              </button>
-                            )}
-                            {!canClear && !canEnd && (
-                              <button
-                                type="button"
-                                onClick={() => openCancelModal(cls)}
-                                className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
-                              >
-                                <FaBan className="mr-1" /> Cancel
-                              </button>
-                            )}
-                          </div>
+                          )}
+                          {canRecreate && (
+                            <button
+                              type="button"
+                              onClick={() => openRecreateModal(cls)}
+                              className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50"
+                            >
+                              <FaRedo className="mr-1" /> Recreate
+                            </button>
+                          )}
+                          {canClear && (
+                            <button
+                              type="button"
+                              onClick={() => handleClear(cls)}
+                              className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
+                            >
+                              <FaTrash className="mr-1" /> Clear
+                            </button>
+                          )}
+                          {!canClear && !canEnd && (
+                            <button
+                              type="button"
+                              onClick={() => openCancelModal(cls)}
+                              className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
+                            >
+                              <FaBan className="mr-1" /> Cancel
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -639,7 +659,8 @@ const TeacherClassesTab = ({
         {meta && meta.totalPages > 1 ? (
           <div className="flex items-center justify-between border-t border-gray-200 px-6 py-3">
             <p className="text-xs text-gray-500">
-              Page {meta.currentPage} of {meta.totalPages} &mdash; {meta.total} total
+              Page {meta.currentPage} of {meta.totalPages} &mdash; {meta.total}{" "}
+              total
             </p>
             <div className="flex gap-2">
               <button
@@ -975,7 +996,8 @@ const TeacherClassesTab = ({
                   Recreate class
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  {recreateTarget.title} — same students will be enrolled automatically.
+                  {recreateTarget.title} — same students will be enrolled
+                  automatically.
                 </p>
               </div>
               <div className="space-y-4 px-6 py-5">
@@ -1007,34 +1029,55 @@ const TeacherClassesTab = ({
                   <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-xs font-medium text-gray-700">Date</label>
+                        <label className="block text-xs font-medium text-gray-700">
+                          Date
+                        </label>
                         <input
                           type="date"
                           value={recreateForm.date}
-                          onChange={(e) => setRecreateForm((prev) => ({ ...prev, date: e.target.value }))}
+                          onChange={(e) =>
+                            setRecreateForm((prev) => ({
+                              ...prev,
+                              date: e.target.value,
+                            }))
+                          }
                           required
                           className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-700">Start time</label>
+                        <label className="block text-xs font-medium text-gray-700">
+                          Start time
+                        </label>
                         <input
                           type="time"
                           value={recreateForm.startTime}
-                          onChange={(e) => setRecreateForm((prev) => ({ ...prev, startTime: e.target.value }))}
+                          onChange={(e) =>
+                            setRecreateForm((prev) => ({
+                              ...prev,
+                              startTime: e.target.value,
+                            }))
+                          }
                           required
                           className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700">Duration (minutes)</label>
+                      <label className="block text-xs font-medium text-gray-700">
+                        Duration (minutes)
+                      </label>
                       <input
                         type="number"
                         min={15}
                         step={5}
                         value={recreateForm.duration}
-                        onChange={(e) => setRecreateForm((prev) => ({ ...prev, duration: e.target.value }))}
+                        onChange={(e) =>
+                          setRecreateForm((prev) => ({
+                            ...prev,
+                            duration: e.target.value,
+                          }))
+                        }
                         className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                       />
                     </div>

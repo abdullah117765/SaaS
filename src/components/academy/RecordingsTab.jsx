@@ -163,6 +163,9 @@ const RecordingsTab = ({ academyId }) => {
         password: "",
         topic: "",
       });
+      // Reset to page 1 so the new recording is visible at the top,
+      // then fetch (handles the case where page was already 1)
+      setPage(1);
       fetchRecordings();
     } catch (e) {
       setAddError(e?.message ?? "Failed to add recording.");

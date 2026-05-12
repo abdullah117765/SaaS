@@ -283,7 +283,10 @@ const StudentDashboard = () => {
                       {cls.joinUrl ? (
                         <div className="flex flex-col gap-1">
                           <span className="flex items-center gap-1 text-xs text-gray-400">
-                            <span className="max-w-[200px] truncate" title={cls.joinUrl}>
+                            <span
+                              className="max-w-[200px] truncate"
+                              title={cls.joinUrl}
+                            >
                               {cls.joinUrl}
                             </span>
                             <CopyButton text={cls.joinUrl} />
@@ -294,18 +297,25 @@ const StudentDashboard = () => {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      {["upcoming", "ongoing"].includes(cls.status) && cls.joinUrl ? (
+                      {["upcoming", "ongoing"].includes(cls.status) &&
+                      cls.joinUrl ? (
                         <a
                           href={cls.joinUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2"
                         >
-                          {cls.status === "ongoing" ? "Rejoin class" : "Join class"}
+                          {cls.status === "ongoing"
+                            ? "Rejoin class"
+                            : "Join class"}
                         </a>
                       ) : (
                         <span className="text-xs text-gray-400">
-                          {cls.status === "ended" ? "Ended" : cls.status === "cancelled" ? "Cancelled" : "—"}
+                          {cls.status === "ended"
+                            ? "Ended"
+                            : cls.status === "cancelled"
+                              ? "Cancelled"
+                              : "—"}
                         </span>
                       )}
                     </td>
@@ -318,7 +328,8 @@ const StudentDashboard = () => {
         {classesMeta && classesMeta.totalPages > 1 ? (
           <div className="flex items-center justify-between border-t border-gray-200 px-6 py-3">
             <p className="text-xs text-gray-500">
-              Page {classesMeta.currentPage} of {classesMeta.totalPages} &mdash; {classesMeta.total} total
+              Page {classesMeta.currentPage} of {classesMeta.totalPages} &mdash;{" "}
+              {classesMeta.total} total
             </p>
             <div className="flex gap-2">
               <button
@@ -329,23 +340,26 @@ const StudentDashboard = () => {
               >
                 &laquo; Prev
               </button>
-              {Array.from({ length: Math.min(classesMeta.totalPages, 7) }, (_, i) => {
-                const page = i + 1;
-                return (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => setClassPage(page)}
-                    className={`inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium ${
-                      classesMeta.currentPage === page
-                        ? "border-emerald-500 bg-emerald-600 text-white"
-                        : "border-gray-300 text-gray-600 hover:border-emerald-400 hover:text-emerald-600"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                );
-              })}
+              {Array.from(
+                { length: Math.min(classesMeta.totalPages, 7) },
+                (_, i) => {
+                  const page = i + 1;
+                  return (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setClassPage(page)}
+                      className={`inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium ${
+                        classesMeta.currentPage === page
+                          ? "border-emerald-500 bg-emerald-600 text-white"
+                          : "border-gray-300 text-gray-600 hover:border-emerald-400 hover:text-emerald-600"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                },
+              )}
               <button
                 type="button"
                 disabled={!classesMeta.nextPage}
