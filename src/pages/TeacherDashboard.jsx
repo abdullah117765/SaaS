@@ -61,6 +61,7 @@ const TeacherDashboard = () => {
     students,
     studentsMeta,
     studentsSummary,
+    creditSummary,
     studentFilters,
     filters,
     setFilters: updateFilters,
@@ -524,12 +525,25 @@ const TeacherDashboard = () => {
             </div>
           </div>
         </div>
-        {upcomingClass ? (
-          <div className="max-w-xl rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-900">
-            <span className="font-semibold">Next session:</span>{" "}
-            {upcomingClass.title} - {upcomingClass.start}
+        <div className="grid gap-3 md:grid-cols-2">
+          {upcomingClass ? (
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-900">
+              <span className="font-semibold">Next session:</span>{" "}
+              {upcomingClass.title} - {upcomingClass.start}
+            </div>
+          ) : null}
+          <div className="rounded-lg border border-emerald-800/20 bg-emerald-950 px-4 py-3 text-sm text-emerald-100">
+            <p className="text-xs uppercase tracking-wide text-emerald-200/80">
+              Available Credits
+            </p>
+            <p className="mt-1 text-2xl font-bold text-white">
+              {(creditSummary?.balance ?? 0).toLocaleString()}
+            </p>
+            <p className="text-xs text-emerald-200/80">
+              Current teacher wallet balance
+            </p>
           </div>
-        ) : null}
+        </div>
       </motion.div>
 
       <div className="border-b border-gray-200">

@@ -55,6 +55,7 @@ const useTeacherDashboardData = () => {
   const [students, setStudents] = useState([]);
   const [studentsMeta, setStudentsMeta] = useState(null);
   const [studentsSummary, setStudentsSummary] = useState(null);
+  const [creditSummary, setCreditSummary] = useState(null);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [studentFilters, setStudentFilters] = useState(DEFAULT_STUDENT_FILTERS);
   const [selectedAcademyId, setSelectedAcademyId] = useState(null);
@@ -66,7 +67,10 @@ const useTeacherDashboardData = () => {
     }
 
     setSelectedAcademyId((prev) => {
-      if (prev && academyMemberships.some((membership) => membership.academyId === prev)) {
+      if (
+        prev &&
+        academyMemberships.some((membership) => membership.academyId === prev)
+      ) {
         return prev;
       }
       return academyMemberships[0]?.academyId ?? null;
@@ -118,7 +122,6 @@ const useTeacherDashboardData = () => {
       return;
     }
 
-
     setLoading(true);
     setError(null);
 
@@ -160,16 +163,18 @@ const useTeacherDashboardData = () => {
         studentFilters.academyId === "active"
           ? activeAcademyId
           : studentFilters.academyId && studentFilters.academyId !== "all"
-          ? studentFilters.academyId
-          : null;
+            ? studentFilters.academyId
+            : null;
       if (resolvedStudentAcademyId) {
         studentParams.append("academyId", resolvedStudentAcademyId);
       }
 
-      const [classesResponse, studentsResponse] = await Promise.all([
-        apiRequest(`/classes?${params.toString()}`),
-        apiRequest(`/users/students?${studentParams.toString()}`),
-      ]);
+      const [classesResponse, studentsResponse, creditResponse] =
+        await Promise.all([
+          apiRequest(`/classes?${params.toString()}`),
+          apiRequest(`/users/students?${studentParams.toString()}`),
+          apiRequest("/zoom-credits/me/summary").catch(() => null),
+        ]);
 
       const mappedClasses = (classesResponse?.data ?? []).map(normaliseClass);
       setClasses(mappedClasses);
@@ -183,7 +188,9 @@ const useTeacherDashboardData = () => {
           .filter((academy) => academy.status === "APPROVED")
           .map((academy) => academy.academyName ?? "Unnamed Academy");
         const enrolledClasses =
-          Number(student._count?.classParticipants ?? student.enrolledClasses ?? 0) || 0;
+          Number(
+            student._count?.classParticipants ?? student.enrolledClasses ?? 0,
+          ) || 0;
         const profilePhotoUrl = resolveAssetUrl(student.profilePhotoUrl);
 
         return {
@@ -202,12 +209,14 @@ const useTeacherDashboardData = () => {
       setStudents(mappedStudents);
       setStudentsMeta(studentsResponse?.meta ?? null);
       setStudentsSummary(studentsResponse?.summary ?? null);
+      setCreditSummary(creditResponse ?? null);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unable to load dashboard data.";
       setStudents([]);
       setStudentsMeta(null);
       setStudentsSummary(null);
+      setCreditSummary(null);
       setError(message);
       showToast({
         status: "error",
@@ -217,7 +226,14 @@ const useTeacherDashboardData = () => {
     } finally {
       setLoading(false);
     }
-  }, [academyMemberships, activeAcademyId, filters, showToast, studentFilters, userId]);
+  }, [
+    academyMemberships,
+    activeAcademyId,
+    filters,
+    showToast,
+    studentFilters,
+    userId,
+  ]);
 
   useEffect(() => {
     load();
@@ -381,6 +397,7 @@ const useTeacherDashboardData = () => {
     students,
     studentsMeta,
     studentsSummary,
+    creditSummary,
     studentFilters,
     filters,
     setFilters: updateFilters,
