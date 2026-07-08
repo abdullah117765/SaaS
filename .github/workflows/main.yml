@@ -23,7 +23,7 @@ permissions:
 
 env:
   NODE_VERSION: "20"
-  IMAGE_NAME: ghcr.io/junaid-ikram/saas
+  IMAGE_NAME: ghcr.io/abdullah117765/saas
 
 jobs:
   verify:
@@ -142,7 +142,7 @@ jobs:
             cd /opt/qedu
 
             touch .env
-            grep -q '^FRONTEND_IMAGE=' .env && sed -i 's#^FRONTEND_IMAGE=.*#FRONTEND_IMAGE=ghcr.io/junaid-ikram/saas:latest#' .env || echo 'FRONTEND_IMAGE=ghcr.io/junaid-ikram/saas:latest' >> .env
+            grep -q '^FRONTEND_IMAGE=' .env && sed -i 's#^FRONTEND_IMAGE=.*#FRONTEND_IMAGE=ghcr.io/abdullah117765/saas:latest#' .env || echo 'FRONTEND_IMAGE=ghcr.io/abdullah117765/saas:latest' >> .env
             grep -q '^BACKEND_IMAGE=' .env && sed -i 's#^BACKEND_IMAGE=.*#BACKEND_IMAGE=ghcr.io/abdullah117765/q_edu_backend:latest#' .env || echo 'BACKEND_IMAGE=ghcr.io/abdullah117765/q_edu_backend:latest' >> .env
             chmod 600 .env
 
@@ -152,6 +152,6 @@ jobs:
 
             docker compose pull frontend
             docker compose up -d --no-deps frontend
-            docker compose up -d nginx
+            docker compose up -d --no-deps nginx
 
             docker image prune -f
