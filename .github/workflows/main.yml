@@ -1,0 +1,162 @@
+name: SaaS Frontend CI/CD
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - production
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches:
+      - main
+      - production
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  NODE_VERSION: "20"
+  IMAGE_NAME: ghcr.io/junaid-ikram/saas
+
+jobs:
+  verify:
+    name: Install & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL_PRODUCTION }}
+          VITE_ASSET_BASE_URL: ${{ secrets.VITE_ASSET_BASE_URL_PRODUCTION }}
+        run: npm run build
+
+  docker:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    needs: verify
+    if: ${{ github.event_name != 'pull_request' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=production,enable=${{ github.ref == 'refs/heads/production' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha,prefix=sha-
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          provenance: true
+          sbom: true
+          build-args: |
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL_PRODUCTION }}
+            VITE_ASSET_BASE_URL=${{ secrets.VITE_ASSET_BASE_URL_PRODUCTION }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: docker
+    if: ${{ github.ref == 'refs/heads/production' && github.event_name != 'pull_request' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare deploy directory
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          script: mkdir -p /opt/qedu
+
+      - name: Upload compose and nginx files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          source: "deploy/production/docker-compose.yml,deploy/production/nginx.conf"
+          target: "/opt/qedu"
+          strip_components: 2
+
+      - name: Pull and restart frontend
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          script: |
+            set -e
+            mkdir -p /opt/qedu
+            cd /opt/qedu
+
+            touch .env
+            grep -q '^FRONTEND_IMAGE=' .env && sed -i 's#^FRONTEND_IMAGE=.*#FRONTEND_IMAGE=ghcr.io/junaid-ikram/saas:production#' .env || echo 'FRONTEND_IMAGE=ghcr.io/junaid-ikram/saas:production' >> .env
+            grep -q '^BACKEND_IMAGE=' .env && sed -i 's#^BACKEND_IMAGE=.*#BACKEND_IMAGE=ghcr.io/abdullah117765/q_edu_backend:production#' .env || echo 'BACKEND_IMAGE=ghcr.io/abdullah117765/q_edu_backend:production' >> .env
+            chmod 600 .env
+
+            if [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
+              echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+            fi
+
+            docker compose pull frontend nginx
+            docker compose up -d --no-deps frontend
+
+            if [ -f /opt/qedu/.env ] && docker compose ps --status running backend | grep -q backend; then
+              docker compose up -d nginx
+            else
+              echo "Backend is not running yet; skipping nginx start until backend deploy runs."
+            fi
+
+            docker image prune -f
