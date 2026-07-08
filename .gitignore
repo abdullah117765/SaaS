@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Local deployment notes
+DEPLOYMENT_URLS.md
